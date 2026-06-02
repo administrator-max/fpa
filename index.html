@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f7;--surface:#fff;--surface2:#f9fafb;--border:#e5e7eb;--text:#111827;--muted:#6b7280;--green:#059669;--red:#dc2626;--accent:#2563eb;--accent2:#1d4ed8;--accent-rgb:37,99,235;--shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);--shadow-lg:0 4px 12px rgba(0,0,0,.08)}
+.entity-gp{--accent:#0f766e;--accent2:#134e4a;--accent-rgb:15,118,110}
+.entity-atl{--accent:#c2410c;--accent2:#9a3412;--accent-rgb:194,65,12}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;line-height:1.5}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.logo{font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px}.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%}
+.period-badge{background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.2);color:var(--accent);padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600}
+.controls-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.control-group{display:flex;align-items:center;gap:6px}
+.control-label{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+select{appearance:none;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 28px 6px 10px;font-size:12px;font-family:inherit;font-weight:500;color:var(--text);cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%236b7280' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+select:focus{outline:none;border-color:var(--accent)}
+.entity-tabs{display:flex;gap:0;margin-left:auto}
+.entity-tab{padding:6px 16px;cursor:pointer;font-weight:500;font-size:12px;color:var(--muted);border:1px solid var(--border);background:var(--surface2);transition:all .2s}
+.entity-tab:first-child{border-radius:6px 0 0 6px}.entity-tab:last-child{border-radius:0 6px 6px 0}.entity-tab:not(:first-child){border-left:none}
+.entity-tab:hover{color:var(--text)}.entity-tab.active{color:#fff;background:var(--accent);border-color:var(--accent)}
+.stmt-tabs-wrap{display:flex;gap:4px}
+.stmt-tab{padding:7px 16px;cursor:pointer;font-weight:500;font-size:12px;color:var(--muted);border:1px solid transparent;border-radius:6px;transition:all .15s}
+.stmt-tab:hover{color:var(--text);background:var(--surface2)}.stmt-tab.active{color:var(--accent);background:rgba(var(--accent-rgb),.06);border-color:rgba(var(--accent-rgb),.15);font-weight:600}
+.main{padding:14px 24px 36px}
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);opacity:.7}
+.kpi-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.kpi-value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600}
+.kpi-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px}
+.kpi-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:600;margin-top:3px}
+.badge-pos{background:rgba(5,150,105,.1);color:#059669}.badge-neg{background:rgba(220,38,38,.1);color:#dc2626}.badge-mod{background:rgba(37,99,235,.1);color:#2563eb}.badge-blue{background:rgba(37,99,235,.1);color:#2563eb}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow)}
+.chart-title{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.chart-title .accent-txt{color:var(--accent)}
+canvas{max-height:210px}
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:10px}
+.table-header{padding:11px 16px;border-bottom:1px solid var(--border);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;justify-content:space-between}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:11px}
+thead th{background:var(--surface2);padding:7px 10px;text-align:right;color:var(--muted);font-weight:500;font-size:9.5px;white-space:nowrap;border-bottom:1px solid var(--border)}
+thead th:first-child{text-align:left;min-width:150px}
+tbody tr{border-bottom:1px solid #f3f4f6}tbody tr:hover{background:#f9fafb}
+tbody td{padding:5px 10px;text-align:right;white-space:nowrap}
+tbody td:first-child{text-align:left;font-family:'Plus Jakarta Sans',sans-serif;font-size:11.5px}
+.row-section td{background:rgba(var(--accent-rgb),.05);color:var(--accent);font-weight:600;font-size:10px;padding:7px 10px}
+.row-subtotal td{font-weight:600;color:var(--accent)}.row-total td{background:var(--surface2);font-weight:600;border-top:1px solid var(--border)}
+.indent1 td:first-child{padding-left:18px}
+.neg{color:#dc2626!important}.pos{color:#059669!important}.neutral{color:var(--muted)!important}
+.tag{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600;background:rgba(var(--accent-rgb),.08);color:var(--accent)}
+.panel{display:none}.panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.panel.active{animation:fadeUp .25s ease}
+.summary-avb-table th{font-size:9px;padding:6px 8px}.summary-avb-table td{font-size:11px;padding:5px 8px}.summary-avb-table .var-cell{font-weight:600}
+
+.row-headline td{background:#EBF0FA;font-weight:600;cursor:pointer;user-select:none}
+.row-headline td:first-child::before{content:'▾ ';font-size:10px;color:var(--accent)}
+.row-headline.collapsed td:first-child::before{content:'▸ '}
+.row-headline.no-children td{cursor:default}
+.row-headline.no-children td:first-child::before{content:'';display:none}
+.row-child{transition:all .15s}
+.row-child.hidden{display:none}
+.row-hl-accent td{background:#D6E4F0;font-weight:700}
+.row-hl-dark td{background:#C5D9F1;font-weight:700}
+.row-hl-green td{background:#E2EFDA;font-weight:700}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:2px}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.charts-grid,.grid-2{grid-template-columns:1fr}}
+.hl-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden}
+.hl-head{padding:11px 16px;display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none}
+.hl-head:hover{background:var(--surface2)}
+.hl-chevron{font-size:9px;color:var(--muted);transition:transform .15s;display:inline-block}
+.hl-card.collapsed .hl-chevron{transform:rotate(-90deg)}
+.hl-title{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.hl-hint{margin-left:auto;font-size:9px;color:var(--muted)}
+.hl-body{padding:0 16px 14px}
+.hl-card.collapsed .hl-body{display:none}
+.hl-textarea{width:100%;min-height:120px;resize:vertical;box-sizing:border-box;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:inherit;font-size:12px;line-height:1.6;color:var(--text);background:var(--surface2);outline:none}
+.hl-textarea:focus{border-color:var(--accent);background:var(--surface)}
+.hl-foot{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap}
+.hl-btn{font-family:inherit;font-size:11px;font-weight:600;padding:6px 14px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.hl-btn:hover{background:var(--accent2)}
+.hl-btn:disabled{opacity:.55;cursor:default}
+.hl-btn-ghost{background:var(--surface);color:var(--accent)}
+.hl-btn-ghost:hover{background:var(--surface2)}
+.hl-status{font-size:10px;color:var(--muted);margin-left:2px}
+.hl-pwin{font-family:inherit;font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;outline:none;width:120px}
+.hl-pwin:focus{border-color:var(--accent)}
+.hl-card.hl-locked .hl-textarea{background:var(--surface2);color:var(--muted)}
+#hl-change,.hl-pw{display:none}
+.hl-card.hl-locked #hl-suggest,.hl-card.hl-locked #hl-save{display:none}
+.hl-card.hl-locked #hl-change{display:inline-flex}
+.hl-card.hl-locked.hl-pwon #hl-change{display:none}
+.hl-card.hl-locked.hl-pwon .hl-pw{display:inline-flex;gap:6px;align-items:center}
+</style></head><body>
+<header><div class="logo"><div class="logo-dot"></div>Financial Performance Dashboard</div>
+<div><span class="period-badge" id="period-badge">YTD · in MIDR</span></div></header>
+<div class="controls-bar">
+  <div class="control-group"><span class="control-label">Year</span><select id="sel-year" onchange="onPC()"><option value="2025" selected>2025</option><option value="2026">2026</option></select></div>
+  <div class="control-group"><span class="control-label">Month</span><select id="sel-month" onchange="onPC()"><option value="-1" selected>Full Year (YTD)</option><option value="0">January</option><option value="1">February</option><option value="2">March</option><option value="3">April</option><option value="4">May</option><option value="5">June</option><option value="6">July</option><option value="7">August</option><option value="8">September</option><option value="9">October</option><option value="10">November</option><option value="11">December</option><option value="-2">Q1 (Jan-Mar)</option><option value="-3">Q2 (Apr-Jun)</option><option value="-4">Q3 (Jul-Sep)</option><option value="-5">Q4 (Oct-Dec)</option></select></div>
+  <div class="control-group" style="margin-left:8px"><span class="control-label">View</span><div class="stmt-tabs-wrap">
+    <div class="stmt-tab active" onclick="sw('summary')">Summary</div><div class="stmt-tab" onclick="sw('pl')">P&L</div><div class="stmt-tab" onclick="sw('bs')">Balance Sheet</div><div class="stmt-tab" onclick="sw('cf')">Cash Flow</div><div class="stmt-tab" onclick="sw('cfp')">CF Projection</div>
+  </div></div>
+  <div class="entity-tabs"><div class="entity-tab active" onclick="se('consol')">Consolidated</div><div class="entity-tab" onclick="se('gp')">GP</div><div class="entity-tab" onclick="se('atl')">ATL</div></div>
+</div>
+<div class="main">
+<!-- SUMMARY --><div id="panel-summary" class="panel active"><div class="kpi-grid" id="kpi-s1"></div><div class="kpi-grid" id="kpi-s2"></div>
+  <div class="hl-card" id="hl-card"><div class="hl-head" onclick="hlToggle()"><span class="hl-chevron" id="hl-chev">&#9662;</span><span class="hl-title">Highlights</span><span class="tag" id="hl-tag"></span><span class="hl-hint">click to expand / collapse</span></div>
+    <div class="hl-body" id="hl-body"><textarea id="hl-text" class="hl-textarea" oninput="hlSave()" placeholder="Click Suggestion for an analysis of the selected period, then edit freely and Save."></textarea>
+      <div class="hl-foot"><button class="hl-btn hl-btn-ghost" id="hl-suggest" onclick="hlSuggest()">Suggestion</button><button class="hl-btn" id="hl-save" onclick="hlSaveClick()">Save</button><button class="hl-btn" id="hl-change" onclick="hlChangeShow()">Change</button><span class="hl-pw" id="hl-pw"><input type="password" id="hl-pwin" class="hl-pwin" placeholder="Password" onkeydown="if(event.key==='Enter')hlUnlock()"><button class="hl-btn" onclick="hlUnlock()">Unlock</button></span><span class="hl-status" id="hl-status"></span></div></div></div>
+  <div class="grid-2"><div class="chart-card"><div class="chart-title">Actual vs Budget <span class="accent-txt" id="sum-lbl"></span></div><canvas id="c-savb"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Gross Margin % vs Revenue</div><canvas id="c-strend"></canvas></div></div>
+  <div class="grid-2"><div class="chart-card"><div class="chart-title">OPEX %<span style="margin-left:auto;font-size:8px;color:var(--muted)">% of OPEX</span></div><div id="c-sopex"></div></div>
+    <div class="chart-card"><div class="chart-title">Cash Position</div><canvas id="c-scash"></canvas></div></div>
+  <div class="table-card"><div class="table-header">P&L Summary — Actual vs Budget <span class="tag" id="sum-tag"></span></div>
+    <div class="table-scroll"><table class="summary-avb-table"><thead id="s-th"></thead><tbody id="s-tb"></tbody></table></div></div></div>
+<!-- PL --><div id="panel-pl" class="panel"><div class="kpi-grid" id="kpi-p1"></div>
+  <div class="charts-grid"><div class="chart-card"><div class="chart-title">Gross Margin % vs Revenue <span class="accent-txt" id="pl-lbl"></span></div><canvas id="c-prg"></canvas></div>
+    <div class="chart-card"><div class="chart-title">OPEX Breakdown</div><canvas id="c-popex"></canvas></div></div>
+  <div class="grid-2"><div class="chart-card"><div class="chart-title">Actual vs Budget</div><canvas id="c-pavb"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Operating Profit Trend</div><canvas id="c-pop"></canvas></div></div>
+  <div class="table-card"><div class="table-header">Profit & Loss <span class="tag" id="pl-tag"></span></div>
+    <div class="table-scroll"><table><thead id="p-th"></thead><tbody id="p-tb"></tbody></table></div></div></div>
+<!-- BS --><div id="panel-bs" class="panel"><div class="kpi-grid" id="kpi-bs" style="grid-template-columns:repeat(6,1fr)"></div>
+  <div class="chart-card" style="margin-bottom:10px"><div class="chart-title">Assets vs Liabilities <span class="accent-txt" id="bs-lbl"></span></div><canvas id="c-bal"></canvas></div>
+  <div class="grid-2"><div class="chart-card"><div class="chart-title">Asset Composition</div><canvas id="c-bacomp"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Liability Structure</div><canvas id="c-bliab"></canvas></div></div>
+  <div class="table-card"><div class="table-header">Balance Sheet <span class="tag" id="bs-tag"></span></div>
+    <div class="table-scroll"><table><thead id="b-th"></thead><tbody id="b-tb"></tbody></table></div></div></div>
+<!-- CF --><div id="panel-cf" class="panel"><div class="kpi-grid" id="kpi-cf"></div>
+  <div class="grid-2"><div class="chart-card"><div class="chart-title">Cash Balance Trend <span class="accent-txt" id="cf-lbl"></span></div><canvas id="c-cbal"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Cash Movement</div><canvas id="c-cnet"></canvas></div></div>
+  <div class="table-card"><div class="table-header">Cash Flow Statement <span class="tag" id="cf-tag"></span></div>
+    <div class="table-scroll"><table><thead id="f-th"></thead><tbody id="f-tb"></tbody></table></div></div></div>
+<!-- CFP --><div id="panel-cfp" class="panel"><div class="kpi-grid" id="kpi-cfp"></div>
+  <div class="chart-card" style="margin-bottom:10px"><div class="chart-title">Projected Cash Balance <span class="accent-txt" id="cfp-lbl"></span></div><canvas id="c-cfpbal" style="max-height:180px"></canvas></div>
+  <div class="table-card"><div class="table-header">Cash Flow Projection <span class="tag" id="cfp-tag"></span></div>
+    <div class="table-scroll"><table><thead id="fp-th"></thead><tbody id="fp-tb"></tbody></table></div></div></div>
+</div>
+<script>
+const D={"consol":{"pl":{"Volume":[11245.75,15296.75,24068.64,18019.64,5748.87,2392.16,18389.59,3073.46,5234.13,1183.24,4426.24,4774.28,113852.74,1043.81,2786.79,8105.1,3789.17],"Revenue":[100368.25,142055.37,203788.78,169815.48,60900.66,28690.16,165577.92,32659.04,63390.82,14577.65,53334.15,60069.49,1095227.77,12396.6,36423.5,86422.37,48803.64],"Cost of Revenue":[-89484.02,-133490.03,-188699.8,-159544.98,-53363.24,-24227.12,-153391.11,-29511.9,-55206.87,-11202.92,-48859.65,-51067.49,-998049.13,-10789.68,-32840.09,-78267.23,-43083.15],"Gross Profit":[10884.23,8565.34,15088.98,10270.5,7537.41,4463.04,12186.82,3147.14,8183.95,3374.73,4474.49,9002.0,97178.64,1606.92,3583.42,8155.14,5720.49],"GP %":[0.11,0.06,0.07,0.06,0.12,0.16,0.07,0.1,0.13,0.23,0.08,0.15,0.09,0.13,0.1,0.09,0.12],"Salary & Allowances":[-3485.22,-3389.59,-5607.0,-3691.81,-3289.8,-3170.02,-3234.55,-2947.95,-2235.75,-3127.78,-2471.74,-2286.41,-38937.62,-2359.76,-2442.37,-4061.04,-2642.45],"Rent & Utility":[-1152.44,-1154.0,-1141.11,-1131.51,-1115.92,-1111.4,-1173.74,-747.46,-752.36,-736.42,-734.99,-733.63,-11684.99,-711.95,-705.08,-612.26,-609.4],"IT & Maintenance":[-276.76,-278.78,-291.56,-246.0,-284.95,-310.43,-242.89,-407.16,-239.92,-227.71,-191.03,-211.05,-3208.25,-226.16,-244.53,-216.39,-227.35],"Business Representative":[-297.37,-243.68,-305.39,-139.1,-314.28,-786.42,-311.04,-223.01,-251.56,-271.59,-419.29,-515.35,-4078.07,-324.05,-539.74,-481.99,-432.34],"Professional Services":[-20.5,-21.01,-42.04,-21.61,-14.19,-108.7,-599.71,-816.98,-730.81,-806.44,-738.95,-2311.73,-6232.65,-485.39,-922.82,-563.38,-535.65],"G & A Expense":[-151.03,-100.28,-99.79,-87.38,-49.33,-86.42,-311.22,-45.83,-93.4,-86.51,-56.56,-71.36,-1239.13,-44.98,-44.84,-45.01,-53.63],"Corporate Communication":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"CSR":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"OPEX":[-5383.32,-5187.35,-7486.9,-5317.41,-5068.47,-5573.39,-5873.15,-5188.38,-4303.8,-5256.44,-4612.57,-6129.53,-65380.71,-4152.29,-4899.38,-5980.06,-4500.83],"EBITDA":[5500.91,3378.0,7602.08,4953.09,2468.94,-1110.35,6313.67,-2041.24,3880.15,-1881.71,-138.08,2872.47,31797.93,-2545.37,-1315.96,2175.08,1219.66],"EBITDA %":[0.05,0.02,0.04,0.03,0.04,-0.04,0.04,-0.06,0.06,-0.13,-0.0,0.05,0.03,-0.21,-0.04,0.03,0.02],"Depreciation":[-238.3,-236.73,-266.17,-187.67,-252.99,-226.67,-173.81,-164.5,-109.14,-107.58,-104.05,-96.3,-2163.91,-92.71,-92.03,-89.22,-89.88],"Operating Profit":[5262.61,3141.27,7335.91,4765.43,2215.95,-1337.02,6139.86,-2205.75,3771.01,-1989.3,-242.13,2776.17,29634.01,-2638.09,-1407.99,2085.86,1129.78],"OP %":[0.05,0.02,0.04,0.03,0.04,-0.05,0.04,-0.07,0.06,-0.14,-0.0,0.05,0.03,-0.21,-0.04,0.02,0.02],"Other Income":[444.58,596.05,483.28,1620.78,456.52,667.56,611.34,533.51,350.15,280.36,330.33,166.81,6541.27,146.48,259.54,100.27,3.67],"Other Expense":[-183.59,-28.81,-108.39,-81.47,-166.36,-36.7,-181.85,-1730.5,-37.85,-165.15,-44.75,-88.79,-2854.21,-45.69,-114.58,-30.38,-122.37],"FX Gain/(Loss)":[434.23,82.42,107.53,198.03,-478.74,-389.02,-200.36,-100.5,3.26,244.56,16.76,-194.01,-275.86,-16.35,-105.86,406.16,-1681.08],"Joint Ops Income":[88.17,50.41,81.66,104.28,95.68,794.64,0.0,0.0,0.0,0.0,0.0,0.0,1214.84,0.0,0.0,0.0,0.0],"Other Inc (Exp)":[783.39,700.06,564.08,1841.61,-92.9,1036.48,229.13,-1297.48,315.55,359.78,302.33,-115.99,4626.05,84.45,39.1,476.05,-1799.78],"Profit Before Mgt Fee":[6046.0,3841.33,7899.98,6607.04,2123.05,-300.54,6368.99,-3503.23,4086.57,-1629.52,60.21,2660.18,34260.06,-2553.64,-1368.89,2561.9,-669.99],"PBM %":[0.06,0.03,0.04,0.04,0.03,-0.01,0.04,-0.11,0.06,-0.11,0.0,0.04,0.03,-0.21,-0.04,0.03,-0.01],"Profit Sharing":[0.0,0.0,0.0,0.0,-4119.78,0.0,0.0,0.0,0.0,0.0,0.0,-808.32,-4928.09,0.0,0.0,0.0,0.0],"Mgt Fee":[-833.46,-853.68,-860.92,-877.08,-882.22,-880.56,-903.87,-893.39,-906.95,-900.87,-893.33,-901.56,-10587.87,-781.8,-791.88,-798.34,-809.83],"Profit Before Tax":[5212.55,2987.65,7039.07,5729.96,-2878.94,-1181.1,5465.12,-4396.62,3179.62,-2530.39,-833.12,950.3,18744.09,-3335.44,-2160.77,1763.56,-1479.83],"PBT %":[0.05,0.02,0.03,0.03,-0.05,-0.04,0.03,-0.13,0.05,-0.17,-0.02,0.02,0.02,-0.27,-0.06,0.02,-0.03],"Tax Benefit (Expense)":[-59.23,-58.42,-58.93,-60.28,-3413.92,-59.35,-818.63,-59.3,-3163.56,-59.12,-59.33,-4843.22,-12713.29,-240.82,-1391.05,-58.99,-235.74],"Corporate Income Tax":[-597.86,-1497.69,-66.27,-121.92,-636.66,-414.42,-296.95,-153.2,-257.02,-28.5,-242.6,17.71,-4295.4,0.0,0.0,0.0,0.0],"Other Comprehensive Income":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Profit After Tax":[4555.45,1431.54,6913.87,5547.76,-6929.52,-1654.87,4349.54,-4609.12,-240.97,-2618.02,-1135.05,-3875.21,1735.4,-3576.26,-3551.82,1704.58,-1715.56],"PAT %":[0.05,0.01,0.03,0.03,-0.11,-0.06,0.03,-0.14,-0.0,-0.18,-0.02,-0.06,0.0,-0.29,-0.1,0.02,-0.04]},"budget":{"Volume":[9800.0,12300.0,18200.0,24100.0,20550.0,20400.0,24650.0,20150.0,25350.0,27250.0,22200.0,21100.0,246050.0,8336.0,5120.0,6070.0,4770.0],"Revenue":[110563.89,129432.86,201219.0,258419.0,220994.0,222869.0,258269.0,219769.0,281219.0,294069.0,239944.0,231594.0,2668361.75,106564.32,67405.5,82431.0,67796.0],"Cost of Revenue":[-104390.3,-122198.3,-187952.34,-243862.28,-207194.44,-210297.44,-242369.44,-207679.69,-264251.94,-276555.69,-225012.94,-218668.69,-2510433.49,-100025.8,-61257.74,-74583.59,-61248.74],"Gross Profit":[6173.59,7234.56,13266.66,14556.72,13799.56,12571.56,15899.56,12089.31,16967.06,17513.31,14931.06,12925.31,157928.25,6538.52,6147.76,7847.41,6547.26],"GP %":[0.06,0.06,0.07,0.06,0.06,0.06,0.06,0.06,0.06,0.06,0.06,0.06,0.06,0.06,0.09,0.1,0.1],"Salary & Allowances":[-3721.79,-3831.15,-6027.61,-3864.88,-4636.06,-3769.93,-3858.8,-3872.33,-4500.34,-3862.83,-3871.25,-3638.79,-49455.74,-3519.5,-3482.16,-5409.05,-3503.01],"Rent & Utility":[-1154.47,-1168.17,-1153.87,-1143.89,-1143.69,-1157.39,-737.16,-736.86,-736.56,-726.09,-725.78,-725.48,-11309.39,-752.51,-745.81,-751.96,-742.83],"IT & Maintenance":[-364.61,-312.21,-344.35,-307.02,-340.79,-358.54,-370.17,-353.34,-377.2,-315.3,-307.23,-351.74,-4102.5,-413.99,-289.21,-246.29,-240.54],"Business Representative":[-385.26,-348.41,-421.3,-369.46,-541.69,-383.84,-425.98,-489.41,-602.38,-381.56,-352.31,-394.24,-5095.84,-386.72,-296.92,-303.67,-387.67],"Professional Services":[-32.55,-18.55,-380.43,-36.58,-77.38,-93.78,-314.83,-36.58,-357.03,-36.58,-314.83,-1298.28,-2997.41,-511.6,-474.91,-491.46,-1581.63],"G & A Expense":[-127.14,-71.9,-99.31,-92.16,-70.29,-73.65,-72.15,-69.28,-385.27,-90.43,-73.94,-71.74,-1297.26,-57.73,-98.06,-60.15,-74.22],"Corporate Communication":[0.0,-20.0,0.0,-1.5,-12.5,0.0,0.0,-1.5,-12.5,0.0,0.0,0.0,-48.0,0.0,0.0,0.0,0.0],"CSR":[0.0,0.0,-20.0,0.0,0.0,-20.0,0.0,0.0,-20.0,0.0,0.0,-20.0,-80.0,0.0,0.0,0.0,0.0],"OPEX":[-5785.82,-5770.4,-8446.87,-5815.49,-6822.39,-5857.14,-5779.09,-5559.29,-6991.27,-5412.78,-5645.35,-6500.28,-74386.15,-5642.05,-5387.07,-7262.58,-6529.9],"EBITDA":[387.77,1464.16,4819.79,8741.22,6977.17,6714.42,10120.47,6530.02,9975.79,12100.53,9285.71,6425.03,83542.11,896.47,760.7,584.83,17.35],"EBITDA %":[0.0,0.01,0.02,0.03,0.03,0.03,0.04,0.03,0.04,0.04,0.04,0.03,0.03,0.01,0.01,0.01,0.0],"Depreciation":[-258.77,-255.97,-255.31,-251.92,-251.83,-244.11,-227.46,-217.33,-147.46,-146.36,-143.91,-142.1,-2542.54,-92.94,-92.72,-90.35,-89.73],"Operating Profit":[129.01,1208.19,4564.48,8489.3,6725.34,6470.31,9893.01,6312.69,9828.33,11954.17,9141.8,6282.93,80999.56,803.54,667.97,494.48,-72.37],"OP %":[0.0,0.01,0.02,0.03,0.03,0.03,0.04,0.03,0.03,0.04,0.04,0.03,0.03,0.01,0.01,0.01,-0.0],"Other Inc (Exp)":[298.27,448.86,258.02,268.56,350.36,425.39,102.13,262.61,86.53,95.89,148.55,123.97,2869.14,57.82,216.98,87.7,96.0],"Profit Before Mgt Fee":[427.27,1657.05,4822.5,8757.86,7075.7,6895.7,9995.14,6575.3,9914.87,12050.07,9290.36,6406.91,83868.7,861.36,884.95,582.18,23.63],"PBM %":[0.0,0.01,0.02,0.03,0.03,0.03,0.04,0.03,0.04,0.04,0.04,0.03,0.03,0.01,0.01,0.01,0.0],"Profit Sharing":[0.0,0.0,0.0,-6570.4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1304.72,-7875.12,0.0,0.0,0.0,0.0],"Mgt Fee":[-840.0,-840.0,-840.0,-840.0,-840.0,-840.0,-840.0,-840.0,-840.0,-840.0,-840.0,-840.0,-10080.0,-754.55,-754.55,-754.55,-754.55],"Profit Before Tax":[-412.73,817.05,3982.5,1347.46,6235.7,6055.7,9155.14,5735.3,9074.87,11210.07,8450.36,4262.19,65913.58,106.81,130.41,-172.37,-730.92],"PBT %":[-0.0,0.01,0.02,0.01,0.03,0.03,0.04,0.03,0.03,0.04,0.04,0.02,0.02,0.0,0.0,-0.0,-0.01],"Tax Benefit (Expense)":[-198.06,1043.74,-285.29,-1415.58,-926.05,-501.55,-1311.81,-748.32,-1118.01,-1709.15,-1095.21,-915.43,-9180.73,-18.59,-27.81,0.0,0.0],"Corporate Income Tax":[0.0,0.0,-174.59,-149.68,-444.4,-342.07,-686.08,-317.75,-824.23,-739.15,-737.96,-381.67,-4797.59,0.0,0.0,-244.09,-91.27],"Profit After Tax":[-610.79,1860.79,3522.61,-217.81,4865.24,5212.07,7157.26,4669.22,7132.63,8761.77,6617.18,2965.08,51935.26,88.23,102.59,-416.45,-822.18],"PAT %":[-0.01,0.01,0.02,-0.0,0.02,0.02,0.03,0.02,0.03,0.03,0.03,0.01,0.02,0.0,0.0,-0.01,-0.01]},"bs":{"Cash and Cash Equivalents":[94663.14,91894.23,85423.1,104131.5,84289.8,192195.65,83919.23,77648.11,78935.24,73953.51,75702.31,100226.66,100226.66,74073.37,69980.83,63616.13,47468.7],"Trade Receivables":[3244.56,24359.29,5017.63,225339.22,21136.24,11718.64,17492.32,10586.97,36598.75,6409.01,23921.26,51524.73,51524.73,14541.12,10548.91,112811.78,130099.59],"Other Receivables":[41245.28,41606.39,52176.68,51999.74,27177.38,15233.48,15699.09,25594.7,29605.95,30267.53,29985.0,9868.63,9868.63,4926.48,1268.55,9541.17,9381.41],"Other Current Assets":[976.54,997.19,1002.08,1035.47,1026.05,1032.68,1031.81,193.98,195.88,193.79,194.63,196.97,196.97,200.79,169.55,92.14,94.93],"Prepaid Taxes":[75162.96,75580.34,78804.02,53196.24,57337.95,44309.65,55338.27,56661.76,58430.53,59856.04,60486.67,63029.7,63029.7,60368.97,62032.59,64026.91,66109.95],"Prepaid Expenses":[2751.5,2064.76,2788.23,2233.71,1905.99,1900.79,1452.68,1170.87,2664.43,2650.53,2398.9,2292.1,2292.1,1948.42,1732.67,1606.25,1492.15],"Advance Payment to Vendor":[304386.48,288647.13,269326.69,62203.53,62915.96,60571.66,69909.63,73617.12,34551.42,48135.22,59862.99,31293.22,31293.22,29174.31,37704.55,34712.79,54506.05],"Total Current Assets":[522430.45,525149.33,494538.44,500139.41,255789.37,326962.54,244843.02,245473.52,240982.21,221465.62,252551.75,258432.02,258432.02,185233.45,183437.66,286407.18,309152.77],"Fixed Asset - nett":[13322.45,12613.98,11775.16,9358.66,11573.23,11536.46,10797.52,10797.25,10587.64,10304.55,10176.99,9922.67,9922.67,9681.96,9418.74,8423.81,8150.02],"Deferred Tax Assets":[2026.99,2026.99,2026.99,2026.99,2026.99,2026.99,2026.99,2026.99,2026.99,2026.99,2245.0,2245.23,2245.23,2245.23,2245.23,2245.23,2080.28],"Allowance for Impairment Loss":[-392.9,-392.9,-392.9,-1384.93,-1384.93,-1384.93,-1384.93,-1384.93,-1384.93,-1384.93,-1385.0,-1384.93,-1384.93,-1384.93,-1384.93,-1384.93,-1384.93],"Other Non Current Assets":[181928.49,181619.79,183922.22,183574.14,182789.34,182333.66,182044.11,186069.25,186354.51,190062.84,184362.58,182739.29,182739.29,189289.64,190029.68,182403.52,181662.51],"Total Non Current Assets":[196885.03,195867.84,197331.46,193574.85,195004.62,194512.17,193483.68,197508.56,197584.2,201009.45,195399.57,193522.26,193522.26,199831.89,200308.73,191687.64,190507.88],"Total Assets":[719315.47,721017.18,691869.91,693714.27,450793.99,521474.71,438326.7,442982.08,438566.41,422475.06,447951.32,451954.28,451954.28,385065.35,383746.38,478094.81,499660.65],"Trade Payables":[218196.51,226831.56,229147.54,207911.82,24431.54,17003.71,19881.62,11523.96,38822.82,15158.48,2410.46,66966.84,66966.84,-1381.96,11438.65,100597.36,112812.47],"Other Payables":[0.0,0.0,0.0,26160.0,0.0,0.0,1130.57,1130.57,1130.57,1130.57,1131.0,11690.57,11690.57,930.57,730.57,530.57,330.57],"Taxes Payable":[12538.58,11839.05,9516.09,11668.15,7014.72,5225.85,4744.24,2723.16,1308.51,1332.04,1169.87,459.46,459.46,737.82,813.84,1292.98,1265.41],"Advances from Customer":[47493.9,31280.95,32076.47,19984.75,25733.82,27037.68,24202.41,24087.88,13234.88,16311.57,7239.6,7886.72,7886.72,10928.43,11259.53,8203.67,9645.28],"Accrued Expenses":[63233.15,61734.09,20967.7,49817.79,31825.42,124739.19,38464.65,49281.06,18517.89,26271.36,74452.99,16890.56,16890.56,29277.22,18659.68,27474.88,36911.12],"Lease (Current)":[7505.5,7096.76,6565.12,6187.83,9260.83,8676.8,8416.92,8157.35,14907.07,14556.08,14264.24,14402.19,14402.19,13812.46,13641.44,12559.02,14814.61],"Other Current Liabilities":[2780.02,2892.42,2780.02,2780.02,2894.75,2877.86,280.02,280.02,375.42,280.02,379.0,280.02,280.02,380.84,388.38,280.02,280.02],"Total Current Liabilities":[351747.66,341674.83,301052.95,324510.36,101161.08,185561.1,97120.42,97183.98,88297.16,75040.11,101047.16,118576.37,118576.37,54685.39,56932.09,150938.5,176059.48],"Post Employee Benefits":[9042.07,9237.71,9459.1,8571.45,8763.25,8957.52,8658.54,8681.88,8764.72,8784.02,8978.0,9019.91,9019.91,9189.74,9359.56,9262.43,8483.21],"Lease (Non-current)":[9605.0,9575.0,8354.0,8324.0,6673.0,6024.0,6425.07,6685.0,5434.46,5434.0,5434.0,3792.0,3792.0,4153.0,4027.73,2485.0,101.0],"Total Non Current Liabilities":[18647.07,18812.71,17813.1,16895.45,15436.25,14981.52,15083.61,15366.88,14199.18,14218.02,14412.0,12811.91,12811.91,13342.74,13387.29,11747.43,8584.21],"Total Liabilities":[370394.72,360487.53,318866.05,341405.81,116597.33,200542.62,112204.04,112550.86,102496.34,89258.13,115459.16,131388.29,131388.29,68028.13,70319.38,162685.93,184643.69],"Capital Stock":[153654.31,153681.16,163879.46,163917.12,163877.66,163872.07,163894.65,173893.91,177745.14,177738.46,177741.6,179765.51,179765.51,179787.01,179783.73,179832.6,179915.64],"Retained Earnings":[337009.07,338523.1,345231.43,340350.31,337996.45,326622.02,327895.62,327740.66,330398.96,330022.09,330389.82,320043.79,320043.79,292711.34,292640.0,293703.46,296465.12],"Dividend":[-149868.0,-150963.86,-150894.84,-151411.51,-149800.67,-149572.58,-150494.42,-150382.26,-151453.03,-151180.25,-151287.69,-151443.08,-151443.08,-151840.15,-151779.62,-152681.95,-154215.29],"Current Earning of Year":[8125.84,19289.7,14787.74,-547.19,-17876.66,-19989.8,-15173.2,-20821.1,-20621.0,-23364.01,-24350.57,-27800.42,-27800.42,-3620.98,-7217.12,-5445.76,-7147.98],"Total Equity":[348921.22,360530.09,373003.8,352308.74,334196.78,320931.71,326122.65,330431.21,336070.06,333216.28,332493.15,320565.79,320565.79,317037.22,313427.0,315408.35,315017.49],"Total Liab & Equity":[719315.94,721017.62,691869.85,693714.55,450794.11,521474.33,438326.69,442982.07,438566.41,422474.41,447952.31,451954.08,451954.08,385065.35,383746.38,478094.28,499661.19]},"cf":{"Collection from customer":[105025.63,323450.15,70076.9,204316.92,73082.07,183729.56,91823.45,84832.22,57397.41,95511.68,105593.98,54913.33,1449753.3,67939.51,70317.3,41424.46,82192.92],"Payment raw materials":[-96749.05,-289263.02,-55754.6,-171764.76,-57732.4,-69643.81,-166490.92,-70735.74,-46505.76,-77411.29,-97380.14,-29137.99,-1228569.46,-77012.79,-63581.05,-27987.18,-83735.51],"Payment non-mat COGS":[-4449.2,-4849.05,-2175.88,-1761.48,-1576.28,-495.18,-3756.52,-1887.76,-3952.24,-4749.66,-888.22,-3606.54,-34148.01,-6194.74,-1932.84,-3838.94,-1314.88],"Payment of taxes":[-9886.81,-27998.89,-6717.38,-15017.54,-13876.1,-8269.79,-18532.96,-8047.18,-8704.72,-6761.83,-7435.27,-13420.67,-144669.14,-1503.92,-7788.57,-10432.4,-8645.05],"Hedging Cost & Forex":[3461.89,1253.53,1056.71,4954.88,-3167.02,-936.87,-639.3,-205.47,657.37,508.45,360.4,155.51,7460.08,767.34,-461.06,1149.94,-1878.7],"Payment OPEX (employee)":[-2686.38,-2599.75,-4510.39,-4113.16,-6748.7,-2543.41,-4710.9,-2495.43,-1685.83,-1964.92,-1727.3,-2969.68,-38755.85,-1658.44,-1890.68,-3378.87,679.16],"Payment OPEX & Other":[-982.4,-3244.74,-4177.16,-790.65,-1458.1,-1665.23,-4258.22,-3541.72,-1872.56,-4461.62,-1724.87,-4171.69,-32348.95,-1641.74,-1901.56,-4060.04,-2307.51],"Interest income":[51.58,130.15,96.6,196.24,120.48,257.06,212.01,108.79,110.69,47.13,70.33,50.28,1451.33,0.0,0.0,55.0,-12.04],"Other income":[0.0,309.85,101.05,486.68,323.27,361.71,309.05,650.4,0.66,0.0,0.0,741.62,3284.28,57.04,333.42,108.28,282.45],"Bank admin":[-9.8,-16.16,-11.91,-13.73,-12.48,-11.28,-20.38,-15.78,-18.58,-16.8,-12.53,-10.66,-170.09,-13.93,-9.42,-5.49,0.0],"Revaluation":[-101.02,865.37,122.22,581.89,-1237.99,-411.67,250.68,-51.31,489.24,-81.71,30.22,152.8,608.71,70.38,-140.75,1121.03,187.48],"Tax Refund":[0.0,0.0,0.0,0.0,0.0,0.0,0.04,0.0,0.0,0.0,0.0,0.0,0.04,2024.38,0.21,0.0,0.03],"Security Deposit":[0.0,0.0,0.0,0.0,0.0,6660.0,-2500.0,-7.5,0.0,0.0,0.0,0.0,4152.5,0.0,0.0,0.0,0.0],"Management Fee":[-973.79,-894.12,-944.85,-970.27,-908.12,-909.77,-1040.45,-916.55,-1048.9,-920.5,-918.49,-931.03,-11376.86,-802.48,-812.91,-813.58,-836.42],"Net CF Operating":[-7299.35,-2856.69,-2838.69,16105.01,-13191.37,106121.32,-109354.45,-2313.03,-5133.22,-301.05,-4031.89,1765.28,-23328.11,-17969.38,-7867.9,-6657.77,-15388.06],"Acq/Sales Fixed Asset":[-149.46,0.0,-856.99,415.88,-324.12,1811.77,1254.29,271.43,0.0,0.0,0.0,0.0,2422.79,0.0,0.0,0.0,214.0],"Proceeds Sale FA":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Deposit":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,13.27,0.0,0.0,0.0],"Government Bonds":[0.0,115.77,0.0,0.0,47.25,0.0,0.0,115.77,0.0,0.0,47.25,0.0,326.04,0.0,115.77,0.0,0.0],"Net CF Investing":[-149.46,115.77,-856.99,415.88,-276.87,1811.77,1254.29,387.2,0.0,0.0,47.25,0.0,2748.83,13.27,115.77,0.0,214.0],"Capital Injection":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,2020.61,2020.61,0.0,0.0,0.0,0.0],"Dividends Paid":[-19950.75,0.0,0.0,0.0,-6346.76,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-26297.51,-10560.0,0.0,0.0,0.0],"Other Receivables":[0.0,0.0,0.0,0.0,0.0,0.0,-138.58,137.69,0.0,0.0,5712.34,1394.4,7105.86,0.0,0.0,0.0,0.0],"Received Svc Payment":[24037.04,0.0,0.0,2213.5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,26250.54,0.0,0.0,0.0,0.0],"Loan Recv Related":[-26.5,-27.98,-2775.49,-25.99,-26.7,-26.82,-37.68,-26.27,-3365.78,-436.27,383.34,18956.47,12564.32,2362.93,3659.19,292.43,-757.38],"Loan Recv Third":[1292.49,0.0,0.0,0.0,0.0,0.0,0.0,-4456.57,9786.0,-4183.84,-422.9,387.96,2403.14,0.0,0.0,0.0,-215.07],"Net CF Financing":[5352.29,-27.98,-2775.49,2187.51,-6373.47,-26.82,-176.26,-4345.15,6420.22,-4620.11,5672.78,22759.45,24046.95,-8197.07,3659.19,292.43,-972.45],"Net increase/(decrease)":[-2096.52,-2768.91,-6471.17,18708.39,-19841.7,107906.27,-108276.42,-6270.97,1287.0,-4921.16,1688.14,24524.73,3467.68,-26153.18,-4092.95,-6365.34,-16146.51],"Beginning Balance":[96759.28,94662.76,91893.85,85422.68,104131.08,84289.37,192195.65,83919.23,77648.25,78935.25,74014.09,75702.23,96759.28,100226.96,74073.78,69980.83,63615.49],"Ending Balance":[94662.76,91893.85,85422.68,104131.08,84289.37,192195.65,83919.23,77648.25,78935.25,74014.09,75702.23,100226.96,100226.96,74073.78,69980.83,63615.49,47468.98]}},"gp":{"pl":{"Volume":[12533.87,14318.14,24350.51,16002.7,6752.24,2883.06,14563.04,3861.96,5182.48,3079.79,2679.0,8013.56,114220.35,626.76,2961.74,6743.39,3404.85],"Sales":[117833.18,129421.75,208673.25,143033.2,75859.25,38966.41,123969.17,45632.06,69109.21,36689.47,35412.82,104635.73,1129235.48,7255.23,41326.44,76115.34,45656.03],"Cost of Sales":[-106948.94,-121501.59,-197199.84,-134939.59,-69842.95,-35589.41,-114797.58,-43005.08,-63911.5,-35049.16,-33273.49,-96692.93,-1052752.06,-5847.69,-39604.22,-71937.92,-42376.58],"Gross Margin":[10884.23,7920.17,11473.41,8093.61,6016.29,3377.0,9171.59,2626.98,5197.7,1640.31,2139.33,7942.8,76483.42,1407.53,1722.22,4177.41,3279.45],"GM %":[0.09,0.06,0.05,0.06,0.08,0.09,0.07,0.06,0.08,0.04,0.06,0.08,0.07,0.19,0.04,0.05,0.07],"Salary & Allowances":[-2490.48,-2430.33,-4643.3,-2704.88,-2318.41,-2191.33,-2223.03,-1947.17,-1995.0,-2026.18,-2235.31,-2049.32,-29254.73,-2231.95,-2369.77,-3996.68,-2241.26],"Rent & Utility":[-594.59,-588.5,-577.56,-565.07,-565.15,-563.91,-562.12,-559.89,-562.0,-547.17,-545.81,-544.07,-6775.83,-544.12,-537.65,-536.41,-530.42],"IT & Maintenance":[-184.16,-197.6,-178.86,-174.86,-202.2,-173.1,-169.36,-164.3,-152.0,-155.56,-151.97,-149.77,-2053.75,-192.94,-205.94,-174.92,-187.57],"Business Representative":[-221.18,-129.7,-266.29,-113.06,-198.58,-138.54,-214.33,-125.48,-161.0,-204.42,-154.58,-123.18,-2050.34,-112.91,-171.81,-208.48,-165.04],"Professional Services":[-16.29,-19.77,-22.62,-17.79,-12.43,-99.31,-142.5,-266.71,-164.0,-249.63,-181.27,-1552.55,-2744.87,-12.01,-457.36,-68.22,-52.27],"G & A Expense":[-143.06,-60.38,-91.57,-70.64,-45.21,-76.18,-297.43,-34.94,-46.0,-52.98,-46.95,-51.03,-1016.37,-33.73,-42.83,-34.36,-50.03],"Corporate Communication":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"CSR":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"OPEX":[-3649.76,-3426.28,-5780.19,-3646.31,-3341.99,-3242.36,-3608.78,-3098.48,-3080.0,-3235.94,-3315.88,-4469.92,-43895.89,-3127.67,-3785.35,-5019.07,-3226.58],"EBITDA":[7234.47,4493.89,5693.21,4447.3,2674.31,134.63,5562.81,-471.5,2117.7,-1595.63,-1176.56,3472.89,32587.53,-1720.13,-2063.13,-841.65,52.87],"EBITDA %":[0.06,0.03,0.03,0.03,0.04,0.0,0.04,-0.01,0.03,-0.04,-0.03,0.03,0.03,-0.24,-0.05,-0.01,0.0],"Depreciation":[-148.41,-145.36,-174.89,-95.69,-163.19,-138.2,-118.82,-116.96,-92.67,-91.71,-90.75,-90.17,-1466.82,-89.71,-89.24,-86.4,-87.06],"Operating Profit":[7086.07,4348.53,5518.32,4351.61,2511.12,-3.57,5443.99,-588.46,2025.04,-1687.34,-1267.31,3382.71,31120.71,-1809.84,-2152.37,-928.05,-34.19],"OP %":[0.06,0.03,0.03,0.03,0.03,-0.0,0.04,-0.01,0.03,-0.05,-0.04,0.03,0.03,-0.25,-0.05,-0.01,-0.0],"Other Income":[439.96,583.79,478.12,1562.69,402.6,615.32,561.81,503.17,301.35,280.36,330.33,166.81,6226.32,99.64,214.86,55.0,2.97],"Other Expense":[-86.73,-16.37,-88.68,-13.8,-144.75,-15.74,-83.18,-1704.18,-18.78,-41.92,-16.0,-58.76,-2288.9,-29.17,-24.63,-24.52,-41.43],"FX Gain/(Loss)":[393.2,233.72,222.05,576.52,-262.72,-279.09,-232.62,-26.07,10.15,224.9,33.74,-151.36,742.44,20.23,-100.52,318.8,-1613.3],"Joint Ops Income":[88.17,50.41,81.66,104.28,95.68,794.64,0.0,0.0,0.0,0.0,0.0,0.0,1214.84,0.0,0.0,0.0,0.0],"Other Inc (Exp)":[834.61,851.54,693.16,2229.69,90.81,1115.12,246.01,-1227.08,292.73,463.34,348.07,-43.31,5894.71,90.7,89.71,349.29,-1651.76],"Profit Before Mgt Fee":[7920.68,5200.07,6211.48,6581.3,2601.93,1111.55,5690.0,-1815.54,2317.76,-1223.99,-919.24,3339.41,37015.41,-1719.14,-2062.66,-578.76,-1685.95],"PBM %":[0.07,0.04,0.03,0.05,0.03,0.03,0.05,-0.04,0.03,-0.03,-0.03,0.03,0.03,-0.24,-0.05,-0.01,-0.04],"Profit Sharing":[0.0,0.0,0.0,0.0,-4119.78,0.0,0.0,0.0,0.0,0.0,0.0,-808.32,-4928.09,0.0,0.0,0.0,0.0],"Management Fee":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Profit Before Tax":[7920.68,5200.07,6211.48,6581.3,-1517.85,1111.55,5690.0,-1815.54,2317.76,-1223.99,-919.24,2531.09,32087.32,-1719.14,-2062.66,-578.76,-1685.95],"PBT %":[0.07,0.04,0.03,0.05,-0.02,0.03,0.05,-0.04,0.03,-0.03,-0.03,0.02,0.03,-0.24,-0.05,-0.01,-0.04],"Tax Benefit (Expense)":[-59.23,-58.42,-58.93,-60.28,-3413.92,-59.35,-818.63,-59.3,-3163.56,-59.12,-59.33,-4843.22,-12713.29,-240.82,-1391.05,-58.99,-235.74],"Corporate Income Tax":[-597.86,-1497.69,-66.27,-121.92,-636.66,-414.42,-296.95,-153.2,-257.02,-28.5,-242.6,-466.56,-4779.67,0.0,0.0,0.0,0.0],"Other Comprehensive Income":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Profit After Tax":[7263.58,3643.96,6086.29,6399.1,-5568.42,637.78,4574.42,-2028.04,-1102.82,-1311.62,-1221.17,-2778.69,14594.36,-1959.96,-3453.71,-637.75,-1921.69],"PAT %":[0.06,0.03,0.03,0.04,-0.07,0.02,0.04,-0.04,-0.02,-0.04,-0.03,-0.03,0.01,-0.27,-0.08,-0.01,-0.04]},"budget":{"Volume":[9600.0,12100.0,18000.0,23900.0,20350.0,20200.0,24450.0,19950.0,25150.0,27050.0,22000.0,20900.0,243650.0,8336.0,5120.0,6070.0,4770.0],"Sales":[108015.04,126884.0,199035.0,256235.0,218810.0,220685.0,256085.0,217585.0,279035.0,291885.0,237760.0,229410.0,2641424.04,107184.49,67405.5,82431.0,67796.0],"Cost of Sales":[-103459.04,-121532.62,-191380.2,-246054.42,-210806.55,-212495.8,-246217.8,-209365.55,-268956.55,-280660.3,-229162.55,-220898.3,-2540989.68,-103374.99,-63983.6,-78499.02,-64446.73],"Gross Margin":[4556.0,5351.38,7654.8,10180.58,8003.45,8189.2,9867.2,8219.45,10078.45,11224.7,8597.45,8511.7,100434.35,3809.5,3421.9,3931.98,3349.27],"GM %":[0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.05,0.05,0.05],"Salary & Allowances":[-2713.62,-2822.98,-5019.44,-2856.71,-2847.89,-2761.77,-2850.63,-2864.16,-3492.17,-2854.66,-2863.09,-2630.63,-36577.78,-2464.78,-2427.44,-4354.33,-2448.3],"Rent & Utility":[-597.47,-611.47,-597.47,-587.79,-587.79,-601.79,-577.88,-577.88,-577.88,-567.71,-567.71,-567.71,-7020.55,-566.85,-560.35,-566.69,-553.34],"IT & Maintenance":[-236.91,-209.57,-234.69,-204.32,-211.75,-250.0,-255.98,-249.88,-242.85,-211.79,-186.89,-248.24,-2742.88,-352.31,-226.43,-188.0,-182.25],"Business Representative":[-266.7,-229.85,-302.74,-250.9,-423.13,-265.28,-307.42,-370.85,-483.82,-263.0,-233.75,-268.25,-3665.68,-258.9,-169.1,-175.85,-259.85],"Professional Services":[-28.95,-17.95,-364.23,-35.98,-76.78,-85.98,-314.23,-35.98,-349.23,-35.98,-314.23,-1105.38,-2764.91,-50.58,-13.89,-14.09,-1118.09],"G & A Expense":[-78.78,-62.54,-89.95,-82.8,-60.93,-64.29,-62.79,-59.92,-375.91,-81.07,-64.58,-62.38,-1145.94,-47.77,-46.6,-50.19,-64.26],"Corporate Communication":[0.0,-20.0,0.0,-1.5,-12.5,0.0,0.0,-1.5,-12.5,0.0,0.0,0.0,-48.0,0.0,0.0,0.0,0.0],"CSR":[0.0,0.0,-20.0,0.0,0.0,-20.0,0.0,0.0,-20.0,0.0,0.0,-20.0,-80.0,0.0,0.0,0.0,0.0],"OPEX":[-3922.44,-3974.37,-6628.52,-4020.01,-4220.78,-4049.12,-4368.92,-4160.17,-5554.35,-4014.21,-4230.25,-4902.59,-54045.75,-3741.19,-3443.82,-5349.16,-4626.09],"EBITDA":[633.56,1377.01,1026.28,6160.57,3782.67,4140.08,5498.28,4059.28,4524.1,7210.49,4367.2,3609.11,46388.61,68.31,-21.92,-1417.18,-1276.82],"EBITDA %":[0.01,0.01,0.01,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.0,-0.0,-0.02,-0.02],"Depreciation":[-172.78,-169.98,-169.33,-165.93,-165.85,-159.1,-175.35,-172.2,-132.07,-131.46,-131.45,-136.38,-1881.87,-89.97,-89.97,-87.59,-86.97],"Operating Profit":[460.78,1207.03,856.95,5994.63,3616.83,3980.98,5322.93,3887.09,4392.03,7079.03,4235.75,3472.73,44506.74,-21.66,-111.89,-1504.77,-1363.79],"OP %":[0.0,0.01,0.0,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,-0.0,-0.0,-0.02,-0.02],"Other Inc (Exp)":[331.03,486.3,340.7,334.08,433.04,489.35,189.49,318.77,189.49,189.49,242.15,189.49,3733.38,96.0,212.0,96.0,96.0],"Profit Before Mgt Fee":[791.8,1693.33,1197.65,6328.71,4049.86,4470.33,5512.42,4205.86,4581.52,7268.52,4477.9,3662.23,48240.12,74.34,100.11,-1408.77,-1267.79],"PBM %":[0.01,0.01,0.01,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.0,0.0,-0.02,-0.02],"Profit Sharing":[0.0,0.0,0.0,-6570.4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1304.72,-7875.12,0.0,0.0,0.0,0.0],"Management Fee":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Profit Before Tax":[791.8,1693.33,1197.65,-241.69,4049.86,4470.33,5512.42,4205.86,4581.52,7268.52,4477.9,2357.51,40365.0,74.34,100.11,-1408.77,-1267.79],"PBT %":[0.01,0.01,0.01,-0.0,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.01,0.02,0.0,0.0,-0.02,-0.02],"Tax Benefit (Expense)":[-198.06,1043.74,-285.29,-1415.58,-926.05,-501.55,-1311.81,-748.32,-1118.01,-1709.15,-1095.21,-915.43,-9180.73,-18.59,-27.81,0.0,0.0],"Corporate Income Tax":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Profit After Tax":[593.74,2737.06,912.36,-1657.27,3123.81,3968.77,4200.62,3457.53,3463.51,5559.37,3382.69,1442.07,31184.27,55.76,72.3,-1408.77,-1267.79],"PAT %":[0.01,0.02,0.0,-0.01,0.01,0.02,0.02,0.02,0.01,0.02,0.01,0.01,0.01,0.0,0.0,-0.02,-0.02]},"bs":{"Cash and Cash Equivalents":[62967.38,63647.66,58256.57,76751.43,57048.36,169128.55,63221.15,58093.22,68858.98,56063.41,63185.0,85237.35,85237.35,62521.58,58044.91,51245.72,39851.15],"Trade Receivables":[1214.69,781.8,897.3,214127.53,1163.86,2611.2,2288.29,3106.86,2081.78,1995.99,1913.0,36344.16,36344.16,3881.9,8155.02,51317.06,75140.29],"Other Receivables":[39081.26,39406.75,49979.27,51999.02,27177.38,15233.48,15562.14,25594.7,29605.95,30268.47,29985.0,9868.63,9868.63,4926.48,1268.55,9541.17,9381.41],"Other Current Assets":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Prepaid Taxes":[75052.97,75361.49,78480.03,53065.14,57097.03,43948.52,55197.35,56409.81,58065.86,59726.45,60256.0,62690.01,62690.01,59928.33,61810.9,63721.89,65993.53],"Prepaid Expenses":[1726.45,1463.92,1398.77,1276.61,1220.79,1236.04,1073.34,824.5,2344.1,2363.91,2144.0,2062.51,2062.51,1815.7,1629.8,1532.16,1447.21],"Advance Payment to Vendor":[299149.64,284793.23,265417.38,59904.22,61104.24,57587.3,67210.94,70214.5,31468.22,42794.97,58335.0,30205.02,30205.02,28029.34,35473.83,31963.91,53553.01],"Total Current Assets":[479192.39,465454.84,454429.32,457123.96,204811.65,289745.08,204553.22,214243.6,192424.9,193213.2,215818.0,226407.68,226407.68,161103.31,166383.01,209321.92,245366.6],"Fixed Asset - nett":[5734.17,5541.3,5349.6,3528.76,6510.76,7117.7,6530.35,6742.56,6645.02,6553.28,6593.0,6496.94,6496.94,6400.5,6304.06,6210.0,5964.79],"Deferred Tax Assets":[2026.99,2026.99,2026.99,2026.99,2026.99,2026.99,2026.99,2026.99,2026.99,2026.99,2245.0,2245.23,2245.23,2245.23,2245.23,2245.23,2080.28],"Allowance for Impairment Loss":[-392.9,-392.9,-392.9,-1384.93,-1384.93,-1384.93,-1384.93,-1384.93,-1384.93,-1384.93,-1385.0,-1384.93,-1384.93,-1384.93,-1384.93,-1384.93,-1384.93],"Other Non Current Assets":[175002.75,174580.02,174157.3,173734.57,173182.49,172759.77,172337.04,176378.38,173169.66,176930.77,176922.0,176159.83,176159.83,180056.44,180804.64,173056.91,171529.92],"Total Non Current Assets":[182371.0,181755.41,181140.98,177905.38,180335.3,180519.52,179509.44,183763.0,180456.73,184126.1,184375.0,183517.07,183517.07,187317.24,187969.0,180127.21,178190.05],"Total Assets":[661563.4,647210.25,635570.3,635029.34,385146.95,470264.61,384062.66,398006.6,372881.63,377339.3,400193.0,409924.75,409924.75,348420.55,354352.02,389449.13,423556.65],"Trade Payables":[217722.56,205870.97,224937.83,202424.99,14814.76,11696.32,4183.64,5260.98,4812.63,2424.27,478.0,51553.89,51553.89,-1868.64,10193.66,47089.59,63906.23],"Other Payables":[0.0,0.0,0.0,26160.0,0.0,0.0,1130.57,1130.57,1130.57,1130.57,1131.0,11690.57,11690.57,930.57,730.57,530.57,330.57],"Taxes Payable":[2122.81,3202.34,836.98,2699.86,1090.3,753.85,1596.03,881.97,791.32,820.38,656.0,423.68,423.68,737.82,813.84,1292.98,1265.41],"Advances from Customer":[34286.95,21581.23,20477.46,12118.04,16378.37,9654.06,12802.12,8719.32,4768.85,5073.87,0.0,2754.97,2754.97,3280.53,2520.0,610.62,3915.64],"Accrued Expenses":[60984.0,59425.52,18445.66,41602.7,16712.08,123339.12,36896.23,47196.52,16609.55,24622.01,55150.0,15039.42,15039.42,18691.57,16847.57,19064.83,35145.71],"Lease (Current)":[323.17,323.17,323.17,323.17,4031.0,4000.0,3912.31,3791.0,10669.5,10534.0,10396.0,10661.0,10661.0,10176.0,10176.4,10176.0,12440.0],"Other Current Liabilities":[2780.02,2892.42,2780.02,2780.02,2894.75,2877.86,280.02,280.02,375.42,280.02,379.0,280.02,280.02,380.84,388.38,280.02,280.02],"Total Current Liabilities":[318219.51,293295.65,267801.12,288108.77,55921.26,152321.21,60800.91,67260.38,39157.85,44885.12,68190.0,92403.54,92403.54,32328.69,41670.42,79044.61,117283.57],"Post Employee Benefits":[9042.07,9237.71,9459.1,8571.45,8763.25,8957.52,8658.54,8681.88,8764.72,8784.02,8978.0,9019.91,9019.91,9189.74,9359.56,9262.43,8483.21],"Lease (Non-current)":[9605.0,9575.0,8354.0,8324.0,6673.0,6024.0,6425.07,6685.0,5434.46,5434.0,5434.0,3792.0,3792.0,4153.0,4027.73,2485.0,101.0],"Total Non Current Liabilities":[18647.07,18812.71,17813.1,16895.45,15436.25,14981.52,15083.61,15366.88,14199.18,14218.02,14412.0,12811.91,12811.91,13342.74,13387.29,11747.43,8584.21],"Total Liabilities":[336866.57,312108.36,285614.22,305004.22,71357.51,167302.73,75884.52,82627.26,53357.03,59103.14,82602.0,105215.46,105215.46,45671.43,55057.71,90792.04,125867.78],"Capital Stock":[152023.5,152023.5,162223.5,162248.5,162248.5,162248.5,162248.5,172250.5,176075.5,176075.5,176076.0,176075.5,176075.5,176075.5,176075.5,176075.5,176075.5],"Retained Earnings":[245048.05,245048.05,251851.75,246256.8,246128.45,235069.15,235069.15,235069.15,236248.07,236248.07,236467.0,225906.65,225906.65,211939.86,211939.86,211939.86,212894.4],"Dividend":[-83306.27,-83306.27,-83306.27,-83306.27,-83306.27,-83306.27,-83306.27,-83306.27,-83306.27,-83306.27,-83306.0,-83306.27,-83306.27,-83306.27,-83306.27,-83306.27,-83306.27],"Current Earning of Year":[10932.02,21337.05,19187.06,4826.38,-11281.11,-11049.87,-5833.25,-8634.04,-9492.71,-10781.79,-11645.0,-13966.79,-13966.79,-1959.96,-5414.79,-6052.53,-7974.22],"Total Equity":[324697.31,335102.34,349956.03,330025.41,313789.57,302961.51,308178.13,315379.34,319524.59,318235.52,317592.0,304709.09,304709.09,302749.13,299294.31,298656.56,297689.41],"Total Liab & Equity":[661563.88,647210.7,635570.25,635029.63,385147.08,470264.24,384062.65,398006.61,372881.63,377338.65,400194.0,409924.55,409924.55,348420.56,354352.02,389448.61,423557.19]},"cf":{"Collection from customer":[105025.63,319448.86,44104.08,174399.17,56357.15,157616.77,56012.7,50032.24,36559.28,51803.07,66616.28,37992.67,1155967.89,46993.67,38288.65,38928.47,49118.19],"Payment raw materials":[-96749.05,-285606.73,-34811.8,-141423.68,-46834.63,-43661.06,-134380.61,-38055.77,-22150.79,-43723.1,-49318.39,-15071.7,-951787.31,-56869.58,-33384.87,-27498.28,-49041.94],"Payment non-mat COGS":[-4449.2,-4849.05,-2175.88,-1761.48,-1576.28,-495.18,-3756.52,-1887.76,-3952.24,-4749.66,-888.22,-3606.54,-34148.01,-6194.74,-1932.84,-3838.94,-1314.88],"Payment of taxes":[-9886.81,-27998.89,-6717.38,-15017.54,-10924.89,-6789.77,-17193.42,-6723.43,-7356.72,-6761.83,-7435.27,-13420.67,-136226.63,-1467.83,-7788.57,-10432.4,-8645.05],"Hedging Cost & Forex":[3461.89,1253.53,1056.71,4954.88,-3167.02,-936.87,-639.3,-205.47,657.37,508.45,360.4,155.51,7460.08,767.34,-461.06,1149.94,-1878.7],"Payment OPEX (employee)":[-1910.22,-1772.98,-3637.2,-3252.4,-5894.81,-1680.29,-2250.88,-1629.65,-1518.78,-1836.69,-1600.01,-2841.58,-29825.5,-1595.39,-1819.62,-3314.26,1163.31],"Payment OPEX & Other":[-522.5,-722.98,-2560.55,-497.99,-855.22,-712.86,-2545.06,-2668.74,-1438.64,-3417.56,-780.89,-1963.76,-18686.75,-838.75,-1105.62,-3174.4,-650.99],"Interest income":[51.58,117.9,91.45,138.16,66.57,204.82,162.49,78.47,61.91,47.13,51.82,50.28,1122.56,0.0,0.0,55.0,-12.04],"Other income":[0.0,309.85,0.0,223.96,323.27,361.71,37.16,7.26,0.66,0.0,0.0,741.62,2005.49,57.04,42.95,0.0,47.96],"Bank admin":[-9.8,-16.16,-11.91,-13.73,-12.48,-11.28,-20.38,-15.78,-18.58,-16.8,-12.53,-10.66,-170.09,-13.93,-9.42,-5.49,0.0],"Revaluation":[-92.94,373.53,171.49,355.62,-590.0,-315.94,5.41,-11.62,218.28,-23.52,4.45,111.2,205.95,-51.81,-137.47,982.48,-218.99],"Tax Refund":[0.0,0.0,0.0,0.0,0.0,0.0,0.04,0.0,0.0,0.0,0.0,0.0,0.04,2024.38,0.21,0.0,0.03],"Security Deposit":[0.0,0.0,0.0,0.0,0.0,6660.0,-2500.0,-7.5,0.0,0.0,0.0,0.0,4152.5,0.0,0.0,0.0,0.0],"Management Fee":[-55.61,55.61,0.0,0.0,55.61,55.61,-55.61,55.61,-55.61,55.61,55.61,55.61,222.45,55.61,55.61,55.61,55.61],"Net CF Operating":[-5137.03,592.49,-4491.0,18104.98,-13052.74,110295.67,-107124.0,-1032.15,1006.13,-8114.89,7053.25,2191.98,292.68,-17133.99,-8252.03,-7092.26,-11377.47],"Acq/Sales Fixed Asset":[-149.46,0.0,-856.99,415.88,-324.12,1811.77,1254.29,271.43,0.0,0.0,0.0,0.0,2422.79,0.0,0.0,0.0,214.0],"Proceeds Sale FA":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Deposit":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Government Bonds":[0.0,115.77,0.0,0.0,47.25,0.0,0.0,115.77,0.0,0.0,47.25,0.0,326.04,0.0,115.77,0.0,0.0],"Net CF Investing":[-149.46,115.77,-856.99,415.88,-276.87,1811.77,1254.29,387.2,0.0,0.0,47.25,0.0,2748.83,0.0,115.77,0.0,214.0],"Capital Injection":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Dividends Paid":[0.0,0.0,0.0,0.0,-6346.76,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-6346.76,-10560.0,0.0,0.0,0.0],"Other Receivables":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Received Svc Payment":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Loan Recv Related":[-26.5,-27.98,-43.15,-25.99,-26.7,-26.82,-37.68,-26.27,-26.5,-436.27,383.34,19472.78,19152.25,4978.33,3659.19,292.43,-15.13],"Loan Recv Third":[1292.49,0.0,0.0,0.0,0.0,0.0,0.0,-4456.57,9786.0,-4183.84,-422.9,387.96,2403.14,0.0,0.0,0.0,-215.07],"Net CF Financing":[1265.99,-27.98,-43.15,-25.99,-6373.47,-26.82,-37.68,-4482.84,9759.5,-4620.11,-39.56,19860.74,15208.62,-5581.67,3659.19,292.43,-230.2],"Net increase/(decrease)":[-4020.5,680.27,-5391.14,18494.87,-19703.08,112080.62,-105907.39,-5127.79,10765.63,-12735.01,7060.94,22052.72,18250.14,-22715.66,-4477.08,-6799.82,-11393.66],"Beginning Balance":[66987.51,62967.01,63647.28,58256.14,76751.01,57047.93,169128.55,63221.15,58093.37,68858.99,56123.99,63184.93,66987.51,85237.65,62521.99,58044.91,51245.09],"Ending Balance":[62967.01,63647.28,58256.14,76751.01,57047.93,169128.55,63221.15,58093.37,68858.99,56123.99,63184.93,85237.65,85237.65,62521.99,58044.91,51245.09,39851.42]}},"atl":{"pl":{"Volume":[0.0,978.61,1901.69,2662.71,1396.84,1711.39,4325.45,2253.05,4676.43,918.98,3719.09,2509.61,27053.85,417.05,2383.05,4588.96,2574.31],"Sales":[0.0,12633.62,21406.5,35203.16,17050.32,19571.85,47996.93,23114.5,54903.46,10937.28,43319.26,29438.16,315575.03,5141.37,31444.52,56078.71,34109.27],"Cost of Sales":[0.0,-11988.45,-17790.93,-33026.27,-15529.2,-18485.81,-44981.69,-22594.33,-51917.21,-9202.86,-40984.09,-28378.96,-294879.81,-4941.99,-29583.32,-52100.98,-31668.23],"Gross Margin":[0.0,645.18,3615.57,2176.89,1521.12,1086.04,3015.23,520.16,2986.25,1734.42,2335.17,1059.19,20695.22,199.39,1861.2,3977.73,2441.04],"GM %":[0.0,0.05,0.17,0.06,0.09,0.06,0.06,0.02,0.05,0.16,0.05,0.04,0.07,0.04,0.06,0.07,0.07],"Salary & Allowances":[-994.74,-959.27,-963.7,-986.92,-971.39,-978.69,-1011.51,-1000.78,-240.75,-1101.6,-236.44,-237.09,-9682.88,-127.81,-72.6,-64.36,-401.19],"Rent & Utility":[-557.85,-565.5,-563.55,-566.44,-550.77,-547.49,-611.62,-187.57,-190.36,-189.25,-189.19,-189.56,-4909.15,-167.83,-167.44,-75.85,-78.99],"IT & Maintenance":[-92.6,-81.19,-112.71,-71.14,-82.75,-137.33,-73.53,-242.86,-87.92,-72.15,-39.06,-61.27,-1154.5,-33.21,-38.6,-41.47,-39.78],"Business Representative":[-76.2,-113.98,-39.11,-26.04,-115.69,-647.87,-96.71,-97.53,-90.56,-67.17,-264.71,-392.17,-2027.73,-211.14,-367.93,-273.51,-267.3],"Professional Services":[-4.21,-1.24,-19.41,-3.82,-1.76,-9.39,-457.21,-550.27,-566.81,-556.81,-557.68,-759.19,-3487.79,-473.38,-465.46,-495.16,-483.38],"G & A Expense":[-7.97,-39.9,-8.23,-16.74,-4.12,-10.25,-13.79,-10.89,-47.4,-33.53,-9.62,-20.33,-222.76,-11.26,-2.01,-10.65,-3.61],"Corporate Communication":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"CSR":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"OPEX":[-1733.57,-1761.07,-1706.71,-1671.1,-1726.48,-2331.03,-2264.37,-2089.9,-1223.8,-2020.5,-1296.69,-1659.61,-21484.82,-1024.63,-1114.03,-961.0,-1274.25],"EBITDA":[-1733.57,-1115.89,1908.86,505.79,-205.36,-1244.98,750.86,-1569.74,1762.45,-286.08,1038.48,-600.42,-789.6,-825.24,747.17,3016.73,1166.79],"EBITDA %":[0.0,-0.09,0.09,0.01,-0.01,-0.06,0.02,-0.07,0.03,-0.03,0.02,-0.02,-0.0,-0.16,0.02,0.05,0.03],"Depreciation":[-89.89,-91.37,-91.28,-91.98,-89.8,-88.47,-54.99,-47.55,-16.47,-15.88,-13.3,-6.13,-697.09,-3.0,-2.78,-2.82,-2.82],"Operating Profit":[-1823.46,-1207.26,1817.58,413.82,-295.16,-1333.45,695.87,-1617.29,1745.98,-301.96,1025.18,-606.55,-1486.69,-828.24,744.39,3013.91,1163.97],"OP %":[0.0,-0.1,0.08,0.01,-0.02,-0.07,0.01,-0.07,0.03,-0.03,0.02,-0.02,-0.0,-0.16,0.02,0.05,0.03],"Other Income":[4.62,12.26,5.16,58.08,53.92,52.25,49.52,30.34,48.79,0.0,0.0,0.0,314.95,46.84,44.68,45.26,0.7],"Other Expense":[-96.86,-12.44,-19.72,-67.67,-21.61,-20.96,-98.67,-26.32,-19.07,-123.23,-28.75,-30.03,-565.31,-16.52,-89.95,-5.86,-80.94],"FX Gain/(Loss)":[41.02,-151.3,-114.53,-378.5,-216.03,-109.93,32.26,-74.43,-6.9,19.66,-16.99,-42.65,-1018.3,-36.58,-5.34,87.35,-67.77],"Joint Ops Income":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Other Inc (Exp)":[-51.22,-151.48,-129.08,-388.08,-183.71,-78.64,-16.88,-70.41,22.83,-103.57,-45.74,-72.68,-1268.66,-6.25,-50.61,126.76,-148.01],"Profit Before Mgt Fee":[-1874.67,-1358.74,1688.5,25.74,-478.88,-1412.09,678.99,-1687.69,1768.81,-405.53,979.45,-679.23,-2755.35,-834.5,693.78,3140.66,1015.96],"PBM %":[0.0,-0.11,0.08,0.0,-0.03,-0.07,0.01,-0.07,0.03,-0.04,0.02,-0.02,-0.01,-0.16,0.02,0.06,0.03],"Profit Sharing":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Management Fee":[-833.46,-853.68,-860.92,-877.08,-882.22,-880.56,-903.87,-893.39,-906.95,-900.87,-893.33,-901.56,-10587.87,-781.8,-791.88,-798.34,-809.83],"Profit Before Tax":[-2708.13,-2212.42,827.58,-851.34,-1361.1,-2292.65,-224.88,-2581.08,861.86,-1306.4,86.12,-1580.78,-13343.23,-1616.3,-98.11,2342.32,206.12],"PBT %":[0.0,-0.18,0.04,-0.02,-0.08,-0.12,-0.0,-0.11,0.02,-0.12,0.0,-0.05,-0.04,-0.31,-0.0,0.04,0.01],"Tax Benefit (Expense)":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Corporate Income Tax":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,484.27,484.27,0.0,0.0,0.0,0.0],"Other Comprehensive Income":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Profit After Tax":[-2708.13,-2212.42,827.58,-851.34,-1361.1,-2292.65,-224.88,-2581.08,861.86,-1306.4,86.12,-1096.52,-12858.96,-1616.3,-98.11,2342.32,206.12],"PAT %":[0.0,-0.18,0.04,-0.02,-0.08,-0.12,-0.0,-0.11,0.02,-0.12,0.0,-0.04,-0.04,-0.31,-0.0,0.04,0.01]},"budget":{"Volume":[3400.0,4000.0,8800.0,7000.0,8800.0,6800.0,9300.0,5900.0,10900.0,9900.0,9850.0,6850.0,91500.0,7536.0,3050.0,4400.0,3600.0],"Sales":[44454.36,52354.11,103864.0,84272.0,102684.0,80434.0,107934.0,70184.0,124684.0,114684.0,113059.0,81059.0,1079666.46,91395.86,39299.5,58718.2,50083.4],"Cost of Sales":[-42836.77,-50470.93,-98252.14,-79895.86,-96887.89,-76051.64,-101901.64,-66314.14,-117795.39,-108395.39,-106725.39,-76645.39,-1022172.56,-88687.84,-36573.63,-54802.77,-46885.41],"Gross Margin":[1617.59,1883.18,5611.86,4376.14,5796.11,4382.36,6032.36,3869.86,6888.61,6288.61,6333.61,4413.61,57493.9,2708.02,2725.87,3915.43,3197.99],"GM %":[0.04,0.04,0.05,0.05,0.06,0.05,0.06,0.06,0.06,0.05,0.06,0.05,0.05,0.03,0.07,0.07,0.06],"Salary & Allowances":[-1008.16,-1008.16,-1008.16,-1008.16,-1788.16,-1008.16,-1008.16,-1008.16,-1008.16,-1008.16,-1008.16,-1008.16,-12877.97,-1054.72,-1054.72,-1054.72,-1054.72],"Rent & Utility":[-557.0,-556.7,-556.4,-556.09,-555.89,-555.59,-159.29,-158.99,-158.68,-158.38,-158.07,-157.77,-4288.84,-185.66,-185.46,-185.26,-189.49],"IT & Maintenance":[-127.69,-102.65,-109.67,-102.71,-129.03,-108.54,-114.19,-103.45,-134.35,-103.5,-120.34,-103.5,-1359.62,-61.68,-62.78,-58.3,-58.3],"Business Representative":[-118.56,-118.56,-118.56,-118.56,-118.56,-118.56,-118.56,-118.56,-118.56,-118.56,-118.56,-125.99,-1430.15,-127.82,-127.82,-127.82,-127.82],"Professional Services":[-3.6,-0.6,-16.2,-0.6,-0.6,-7.8,-0.6,-0.6,-7.8,-0.6,-0.6,-192.9,-232.5,-461.02,-461.02,-477.37,-463.54],"G & A Expense":[-48.36,-9.36,-9.36,-9.36,-9.36,-9.36,-9.36,-9.36,-9.36,-9.36,-9.36,-9.36,-151.32,-9.96,-51.46,-9.96,-9.96],"Corporate Communication":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"CSR":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"OPEX":[-1863.37,-1796.03,-1818.35,-1795.48,-2601.61,-1808.02,-1410.17,-1399.12,-1436.91,-1398.56,-1415.1,-1597.69,-20340.4,-1900.86,-1943.25,-1913.43,-1903.81],"EBITDA":[-245.78,87.15,3793.51,2580.66,3194.5,2574.34,4622.19,2470.74,5451.7,4890.05,4918.51,2815.92,37153.5,807.16,782.62,2002.01,1294.17],"EBITDA %":[-0.01,0.0,0.04,0.03,0.03,0.03,0.04,0.04,0.04,0.04,0.04,0.03,0.03,0.01,0.02,0.03,0.03],"Depreciation":[-85.99,-85.99,-85.99,-85.99,-85.99,-85.01,-52.12,-45.14,-15.39,-14.9,-12.46,-5.72,-660.67,-2.97,-2.76,-2.76,-2.76],"Operating Profit":[-331.77,1.17,3707.53,2494.67,3108.51,2489.33,4570.08,2425.6,5436.31,4875.14,4906.05,2810.2,36492.82,804.19,779.86,1999.25,1291.42],"OP %":[-0.01,0.0,0.04,0.03,0.03,0.03,0.04,0.03,0.04,0.04,0.04,0.03,0.03,0.01,0.02,0.03,0.03],"Other Inc (Exp)":[-32.76,-37.44,-82.68,-65.52,-82.68,-63.96,-87.36,-56.16,-102.96,-93.6,-93.6,-65.52,-864.24,-38.18,4.98,-8.3,0.0],"Profit Before Mgt Fee":[-364.53,-36.27,3624.85,2429.15,3025.83,2425.37,4482.72,2369.44,5333.35,4781.54,4812.45,2744.68,35628.58,766.01,784.84,1990.95,1291.42],"PBM %":[-0.01,-0.0,0.03,0.03,0.03,0.03,0.04,0.03,0.04,0.04,0.04,0.03,0.03,0.01,0.02,0.03,0.03],"Profit Sharing":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Management Fee":[-840.0,-840.0,-840.0,-840.0,-840.0,-840.0,-840.0,-840.0,-840.0,-840.0,-840.0,-840.0,-10080.0,-754.55,-754.55,-754.55,-754.55],"Profit Before Tax":[-1204.53,-876.27,2784.85,1589.15,2185.83,1585.37,3642.72,1529.44,4493.35,3941.54,3972.45,1904.68,25548.58,11.47,30.29,1236.41,536.87],"PBT %":[-0.03,-0.02,0.03,0.02,0.02,0.02,0.03,0.02,0.04,0.03,0.04,0.02,0.02,0.0,0.0,0.02,0.01],"Tax Benefit (Expense)":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Corporate Income Tax":[0.0,0.0,-174.59,-149.68,-444.4,-342.07,-686.08,-317.75,-824.23,-739.15,-737.96,-381.67,-4797.59,0.0,0.0,-244.09,-91.27],"Profit After Tax":[-1204.53,-876.27,2610.25,1439.47,1741.43,1243.3,2956.64,1211.69,3669.12,3202.39,3234.49,1523.01,20750.99,11.47,30.29,992.32,445.6],"PAT %":[-0.03,-0.02,0.03,0.02,0.02,0.02,0.03,0.02,0.03,0.03,0.03,0.02,0.02,0.0,0.0,0.02,0.01]},"bs":{"Cash and Cash Equivalents":[31695.75,28246.57,27166.53,27380.07,27241.44,23067.1,20698.08,19554.89,10076.26,17890.1,12517.31,14989.31,14989.31,11551.8,11935.92,12370.41,7617.55],"Trade Receivables":[2029.87,23577.48,4120.34,11211.69,19972.38,9107.44,15204.03,7480.11,34516.97,4413.02,22008.26,15180.57,15180.57,10659.22,2393.89,61494.72,54959.3],"Other Receivables":[2164.02,2199.65,2197.41,0.73,0.0,0.0,136.95,0.0,0.0,-0.94,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Other Current Assets":[976.54,997.19,1002.08,1035.47,1026.05,1032.68,1031.81,193.98,195.88,193.79,194.63,196.97,196.97,200.79,169.55,92.14,94.93],"Prepaid Taxes":[109.98,218.85,323.99,131.1,240.92,361.13,140.91,251.95,364.67,129.59,230.67,339.7,339.7,440.64,221.7,305.02,116.41],"Prepaid Expenses":[1025.05,600.84,1389.46,957.09,685.2,664.76,379.34,346.37,320.33,286.61,254.9,229.59,229.59,132.72,102.87,74.09,44.94],"Advance Payment to Vendor":[5236.84,3853.91,3909.31,2299.31,1811.72,2984.36,2698.68,3402.62,3083.21,5340.24,1527.99,1088.2,1088.2,1144.97,2230.72,2748.88,953.04],"Total Current Assets":[43238.05,59694.49,40109.12,43015.46,50977.72,37217.45,40289.8,31229.92,48557.32,28252.41,36733.75,32024.34,32024.34,24130.14,17054.64,77085.25,63786.17],"Fixed Asset - nett":[7588.28,7072.67,6425.56,5829.9,5062.47,4418.76,4267.17,4054.69,3942.62,3751.28,3583.99,3425.74,3425.74,3281.46,3114.68,2213.81,2185.23],"Deferred Tax Assets":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Allowance for Impairment Loss":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Other Non Current Assets":[6925.74,7039.76,9764.92,9839.57,9606.84,9573.89,9707.07,9690.87,13184.85,13132.07,7440.58,6579.45,6579.45,9233.2,9225.04,9346.61,10132.6],"Total Non Current Assets":[14514.02,14112.43,16190.49,15669.47,14669.32,13992.65,13974.24,13745.56,17127.47,16883.35,11024.57,10005.19,10005.19,12514.66,12339.72,11560.42,12317.83],"Total Assets":[57752.08,73806.93,56299.61,58684.93,65647.04,51210.1,54264.04,44975.47,65684.79,45135.76,47758.32,42029.53,42029.53,36644.8,29394.37,88645.68,76104.0],"Trade Payables":[473.94,20960.59,4209.71,5486.83,9616.78,5307.4,15697.99,6262.97,34010.19,12734.21,1932.46,15412.96,15412.96,486.68,1244.99,53507.77,48906.25],"Other Payables":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Taxes Payable":[10415.77,8636.71,8679.11,8968.28,5924.42,4472.01,3148.21,1841.18,517.19,511.66,513.87,35.78,35.78,0.0,0.0,0.0,0.0],"Advances from Customer":[13206.95,9699.72,11599.01,7866.72,9355.45,17383.62,11400.29,15368.56,8466.02,11237.69,7239.6,5131.75,5131.75,7647.9,8739.53,7593.05,5729.64],"Accrued Expenses":[2249.15,2308.57,2522.05,8215.09,15113.34,1400.07,1568.42,2084.54,1908.34,1649.35,19302.99,1851.14,1851.14,10585.66,1812.11,8410.05,1765.41],"Lease (Current)":[7182.33,6773.59,6241.96,5864.67,5229.83,4676.8,4504.61,4366.35,4237.57,4022.08,3868.24,3741.19,3741.19,3636.46,3465.04,2383.02,2374.61],"Other Current Liabilities":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Total Current Liabilities":[33528.15,48379.17,33251.83,36401.59,45239.82,33239.89,36319.51,29923.6,49139.31,30154.99,32857.16,26172.83,26172.83,22356.7,15261.68,71893.89,58775.91],"Post Employee Benefits":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Lease (Non-current)":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Total Non Current Liabilities":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Total Liabilities":[33528.15,48379.17,33251.83,36401.59,45239.82,33239.89,36319.51,29923.6,49139.31,30154.99,32857.16,26172.83,26172.83,22356.7,15261.68,71893.89,58775.91],"Capital Stock":[1630.81,1657.66,1655.96,1668.62,1629.16,1623.57,1646.15,1643.41,1669.64,1662.96,1665.6,3690.01,3690.01,3711.51,3708.23,3757.1,3840.14],"Retained Earnings":[91961.02,93475.04,93379.69,94093.51,91868.0,91552.87,92826.47,92671.51,94150.88,93774.01,93922.82,94137.14,94137.14,80771.48,80700.13,81763.59,83570.72],"Dividend":[-66561.73,-67657.59,-67588.57,-68105.24,-66494.4,-66266.32,-67188.15,-67075.99,-68146.76,-67873.98,-67981.69,-68136.81,-68136.81,-68533.88,-68473.35,-69375.68,-70909.02],"Current Earning of Year":[-2806.18,-2047.36,-4399.31,-5373.57,-6595.55,-8939.93,-9339.96,-12187.06,-11128.29,-12582.22,-12705.57,-13833.63,-13833.63,-1661.01,-1802.33,606.77,826.24],"Total Equity":[24223.91,25427.75,23047.77,22283.33,20407.2,17970.2,17944.52,15051.87,16545.47,14980.76,14901.15,15856.7,15856.7,14288.09,14132.69,16751.78,17328.08],"Total Liab & Equity":[57752.06,73806.93,56299.59,58684.92,65647.02,51210.09,54264.03,44975.47,65684.78,45135.76,47758.31,42029.53,42029.53,36644.79,29394.37,88645.67,76103.99]},"cf":{"Collection from customer":[0.0,4001.29,25972.82,29917.75,16724.92,26112.78,35810.75,34799.99,20838.14,43708.61,38977.7,16920.66,293785.4,20945.84,32028.65,2495.99,33074.72],"Payment raw materials":[0.0,-3656.29,-20942.79,-30341.08,-10897.76,-25982.75,-32110.31,-32679.96,-24354.97,-33688.18,-48061.75,-14066.29,-276782.15,-20143.21,-30196.18,-488.9,-34693.57],"Payment non-mat COGS":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Payment of taxes":[0.0,0.0,0.0,0.0,-2951.21,-1480.02,-1339.54,-1323.74,-1347.99,0.0,0.0,0.0,-8442.51,-36.09,0.0,0.0,0.0],"Hedging Cost & Forex":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Payment OPEX (employee)":[-776.17,-826.77,-873.19,-860.76,-853.89,-863.12,-2460.02,-865.78,-167.05,-128.23,-127.28,-128.09,-8930.35,-63.05,-71.06,-64.61,-484.16],"Payment OPEX & Other":[-459.89,-2521.76,-1616.61,-292.66,-602.87,-952.37,-1713.16,-872.98,-433.92,-1044.06,-943.98,-2207.93,-13662.2,-802.99,-795.94,-885.64,-1656.51],"Interest income":[0.0,12.25,5.15,58.08,53.91,52.24,49.52,30.33,48.78,0.0,18.5,0.0,328.77,0.0,0.0,0.0,0.0],"Other income":[0.0,0.0,101.05,262.72,0.0,0.0,271.89,643.14,0.0,0.0,0.0,0.0,1278.79,0.0,290.47,108.28,234.49],"Bank admin":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Revaluation":[-8.08,491.83,-49.26,226.26,-647.99,-95.72,245.27,-39.7,270.95,-58.18,25.78,41.6,402.76,122.2,-3.27,138.54,406.47],"Tax Refund":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Security Deposit":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Management Fee":[-918.18,-949.73,-944.85,-970.27,-963.73,-965.38,-984.84,-972.16,-993.29,-976.12,-974.11,-986.65,-11599.31,-858.09,-868.53,-869.19,-892.04],"Net CF Operating":[-2162.32,-3449.18,1652.32,-1999.97,-138.63,-4174.35,-2230.45,-1280.88,-6139.35,7813.84,-11085.13,-426.7,-23620.79,-835.39,384.13,434.48,-4010.59],"Acq/Sales Fixed Asset":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Proceeds Sale FA":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Deposit":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,13.27,0.0,0.0,0.0],"Government Bonds":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Net CF Investing":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,13.27,0.0,0.0,0.0],"Capital Injection":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,2020.61,2020.61,0.0,0.0,0.0,0.0],"Dividends Paid":[-19950.75,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-19950.75,0.0,0.0,0.0,0.0],"Other Receivables":[0.0,0.0,0.0,0.0,0.0,0.0,-138.58,137.69,0.0,0.0,5712.34,1394.4,7105.86,0.0,0.0,0.0,0.0],"Received Svc Payment":[24037.04,0.0,0.0,2213.5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,26250.54,0.0,0.0,0.0,0.0],"Loan Recv Related":[0.0,0.0,-2732.34,0.0,0.0,0.0,0.0,0.0,-3339.28,0.0,0.0,-516.3,-6587.93,-2615.41,0.0,0.0,-742.26],"Loan Recv Third":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"Net CF Financing":[4086.29,0.0,-2732.34,2213.5,0.0,0.0,-138.58,137.69,-3339.28,0.0,5712.34,2898.71,8838.33,-2615.41,0.0,0.0,-742.26],"Net increase/(decrease)":[1923.98,-3449.18,-1080.02,213.52,-138.63,-4174.35,-2369.03,-1143.18,-9478.63,7813.84,-5372.8,2472.01,-14782.46,-3437.52,384.13,434.48,-4752.85],"Beginning Balance":[29771.77,31695.75,28246.57,27166.55,27380.07,27241.45,23067.1,20698.07,19554.89,10076.26,17890.1,12517.3,29771.77,14989.31,11551.79,11935.92,12370.4],"Ending Balance":[31695.75,28246.57,27166.55,27380.07,27241.45,23067.1,20698.07,19554.89,10076.26,17890.1,12517.3,14989.31,14989.31,11551.79,11935.92,12370.4,7617.55]}}};
+const CFP={"consol":{"Beginning Cash Balance":[47368.19,60639.37,58326.14],"Remaining Collections from Customer":[198591.88,44620.0,48806.02],"Remaining Payment - Raw Material":[-162412.63,-38591.36,-43196.82],"Remaining Payment - Other COGS":[-16951.27,-1674.22,-2083.8],"Net Inflow / (Outflow)":[19227.98,4354.41,3525.4],"Cash from trading operations":[66596.17,64993.78,61851.53],"Total OPEX":[-5031.37,-5694.22,-4719.34],"Cash from operating activities":[61564.8,59299.56,57132.19],"CAPEX Vehicles":[-111.05,-111.05,-111.05],"Bonds coupon":[48.0,0.0,0.0],"Other provision":[0.0,0.0,0.0],"Bank Loan":[0.0,0.0,0.0],"Management Fee":[-862.37,-862.37,-862.37],"Others":[0.0,0.0,0.0],"Ending Cash Balance":[60639.37,58326.14,56158.77],"Mar-27 Ending Balance":4002.85},"gp":{"Beginning Cash Balance":[39852.0,50192.18,48713.51],"Remaining Collections from Customer":[134053.69,27048.55,32175.1],"Remaining Payment - Raw Material":[-102943.54,-22365.64,-28087.73],"Remaining Payment - Other COGS":[-16951.27,-1674.22,-2083.8],"Net Inflow / (Outflow)":[14158.87,3008.68,2003.56],"Cash from trading operations":[54010.87,53200.86,50717.07],"Total OPEX":[-3755.65,-4376.3,-3613.69],"Cash from operating activities":[50255.23,48824.56,47103.38],"CAPEX Vehicles":[-111.05,-111.05,-111.05],"Bonds coupon":[48.0,0.0,0.0],"Other provision":[0.0,0.0,0.0],"Bank Loan":[0.0,0.0,0.0],"Management Fee":[0.0,0.0,0.0],"Others":[0.0,0.0,0.0],"Ending Cash Balance":[50192.18,48713.51,46992.33],"Jun-27 Ending Balance":46992.33},"atl":{"Beginning Cash Balance":[7516.19,10447.19,9612.63],"Remaining Collections from Customer":[64538.19,17571.45,16630.93],"Remaining Payment - Raw Material":[-59469.08,-16225.72,-15109.1],"Remaining Payment - Other COGS":[0.0,0.0,0.0],"Net Inflow / (Outflow)":[5069.11,1345.73,1521.83],"Cash from trading operations":[12585.3,11792.93,11134.46],"Total OPEX":[-1275.73,-1317.93,-1105.65],"Cash from operating activities":[11309.57,10475.0,10028.81],"CAPEX Vehicles":[0.0,0.0,0.0],"Bonds coupon":[0.0,0.0,0.0],"Other provision":[0.0,0.0,0.0],"Bank Loan":[0.0,0.0,0.0],"Management Fee":[-862.37,-862.37,-862.37],"Others":[0.0,0.0,0.0],"Ending Cash Balance":[10447.19,9612.63,9166.44],"Oct-26 Ending Balance":3248.03}};
+
+const MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const EC={consol:{accent:'#2563eb',rgb:'37,99,235',bar:'rgba(37,99,235,.25)',fill:'rgba(37,99,235,.08)',
+  doughnut:['#2563eb','#0f766e','#c2410c','#7c3aed','#059669','#9ca3af','#d97706','#64748b'],name:'Consolidated'},
+  gp:{accent:'#0f766e',rgb:'15,118,110',bar:'rgba(15,118,110,.25)',fill:'rgba(15,118,110,.08)',
+  doughnut:['#2563eb','#0f766e','#c2410c','#7c3aed','#059669','#9ca3af','#d97706','#64748b'],name:'GP'},
+  atl:{accent:'#c2410c',rgb:'194,65,12',bar:'rgba(194,65,12,.25)',fill:'rgba(194,65,12,.08)',
+  doughnut:['#2563eb','#0f766e','#c2410c','#7c3aed','#059669','#9ca3af','#d97706','#64748b'],name:'ATL'}};
+let cE='consol',cS='summary',ch={};const ST=['summary','pl','bs','cf','cfp'];
+function V(o,k){return(o&&o[k])?o[k]:Array(16).fill(0)}
+function VV(o,...ks){for(const k of ks)if(o&&o[k])return o[k];return Array(16).fill(0)}
+function $(id){return document.getElementById(id)}
+function sm(a,s,e){let t=0;for(let i=s;i<=e&&i<a.length;i++)t+=(a[i]||0);return t}
+function fmt(v){if(v==null||isNaN(v))return'–';return new Intl.NumberFormat('en-US',{maximumFractionDigits:0}).format(v)}
+function fmtS(v){if(v==null||isNaN(v))return'–';const a=Math.abs(v);if(a>=1e6)return(v/1e6).toFixed(1)+'Mn';if(a>=1e3)return(v/1e3).toFixed(1)+'K';return v.toFixed(0)}
+function fF(v){if(v==null||isNaN(v))return'–';return new Intl.NumberFormat('en-US',{maximumFractionDigits:0}).format(v)}
+function cv(v){if(v>0.5)return'<span class="pos">'+fF(v)+'</span>';if(v<-0.5)return'<span class="neg">('+fF(Math.abs(v))+')</span>';return'<span class="neutral">–</span>'}
+function dc(id){if(ch[id]){ch[id].destroy();delete ch[id]}}
+function gY(){return+$('sel-year').value}function gM(){return+$('sel-month').value}
+function gP(){const y=gY(),m=gM();
+  if(y===2025){
+    if(m===-1)return{s:0,e:11,fy:12};
+    if(m===-2)return{s:0,e:2,fy:null};
+    if(m===-3)return{s:3,e:5,fy:null};
+    if(m===-4)return{s:6,e:8,fy:null};
+    if(m===-5)return{s:9,e:11,fy:null};
+    return{s:m,e:m,fy:null}}
+  if(m===-1)return{s:13,e:16,fy:null};
+  if(m===-2)return{s:13,e:15,fy:null};
+  if(m===-3||m===-4||m===-5)return{s:13,e:16,fy:null};
+  return m<=3?{s:13+m,e:13+m,fy:null}:{s:13,e:16,fy:null}}
+function gCR(){const y=gY(),m=gM();
+  if(y===2025){
+    if(m===-2)return{s:0,e:2,l:['Jan','Feb','Mar']};
+    if(m===-3)return{s:3,e:5,l:['Apr','May','Jun']};
+    if(m===-4)return{s:6,e:8,l:['Jul','Aug','Sep']};
+    if(m===-5)return{s:9,e:11,l:['Oct','Nov','Dec']};
+    return{s:0,e:11,l:MO}}
+  return{s:13,e:16,l:['Jan','Feb','Mar','Apr']}}
+function pV(a){if(!a||!a.length)return 0;const p=gP();return p.fy!=null?(a[p.fy]||sm(a,p.s,p.e)):sm(a,p.s,p.e)}
+// Cash cycle = DSO + DIO - DPO (Days Sales Outstanding + Days Inventory Outstanding
+// - Days Payable Outstanding). Uses average balances. DIO needs an Inventory line on
+// the Balance Sheet; if none exists in the data, DIO = 0 and the cycle reduces to DSO - DPO.
+function wcCalc(ent,p,lat){
+  const d=D[ent].pl,bs=D[ent].bs;
+  const rev=VV(d,'Revenue','Sales'),cog=VV(d,'Cost of Revenue','Cost of Sales');
+  const tRcv=VV(bs,'Trade Receivables'),tPay=VV(bs,'Trade Payables');
+  const tInv=VV(bs,'Inventory','Inventories','Merchandise Inventory','Persediaan');
+  const sv=a=>p.fy!=null?(a[p.fy]||sm(a,p.s,p.e)):sm(a,p.s,p.e);
+  const days=(p.fy!=null?12:(p.e-p.s+1))*30;
+  const vRev=sv(rev),vCogsAbs=Math.abs(sv(cog));
+  let openIdx=p.s-1;if(openIdx===12)openIdx=11;
+  const avg=a=>openIdx>=0?((a[openIdx]||0)+(a[lat]||0))/2:(a[lat]||0);
+  const avgRcv=avg(tRcv),avgPay=avg(tPay),avgInv=avg(tInv);
+  const valid=vRev>0&&vCogsAbs>0,payValid=avgPay>0;
+  const hasInv=tInv.some(function(x){return x;});
+  const dso=valid?(avgRcv/vRev*days):0;
+  const dio=valid?(avgInv/vCogsAbs*days):0;
+  const dpo=(valid&&payValid)?(avgPay/vCogsAbs*days):0;
+  return {valid:valid,payValid:payValid,hasInv:hasInv,dso:dso,dio:dio,dpo:dpo,wcDays:dso+dio-dpo,vRev:vRev};
+}
+function sR(a){if(!a)return[];const r=gCR();return a.slice(r.s,r.e+1)}
+function gL(){return gCR().l}
+function aH(){return['Jan-25','Feb-25','Mar-25','Apr-25','May-25','Jun-25','Jul-25','Aug-25','Sep-25','Oct-25','Nov-25','Dec-25','FY2025','Jan-26','Feb-26','Mar-26','Apr-26']}
+// Shared cash-runway calc so the Summary KPI and the CFP tab always agree.
+// Runway = months to the long-term ending-balance month + full months that balance covers.
+function cfpRunway(e){
+  const cf=CFP[e]||{};
+  const opx=cf['Total OPEX']||[];
+  const avgOp=opx.length?opx.reduce((a,b)=>a+Math.abs(b),0)/opx.length:0;
+  // The long-term "Mon-YY Ending Balance" row carries the runway end month (calculated upstream).
+  const ltKey=Object.keys(cf).find(k=>/ Ending Balance$/.test(k)&&k!=='Ending Cash Balance'&&k!=='Beginning Cash Balance');
+  const baseY=2026,baseM=3; // Apr-2026 = last actual month
+  let months;
+  const mt=ltKey?ltKey.match(/^([A-Za-z]{3})-(\d{2})/):null;
+  if(mt){
+    months=Math.max((2000+ +mt[2]-baseY)*12+(MO.indexOf(mt[1])-baseM),0); // months to that month, used as-is
+  } else {
+    const end=cf['Ending Cash Balance']||[];
+    const latCash=end.length?(end[end.length-1]||0):0;
+    months=avgOp>0?Math.floor(latCash/avgOp):99;
+  }
+  const d=new Date(baseY,baseM,1);d.setMonth(d.getMonth()+months);
+  return {months:months,avgOp:avgOp,until:MO[d.getMonth()]+' '+d.getFullYear()};
+}
+function onPC(){const y=gY(),m=gM(),s=$('sel-month');
+  for(let i=0;i<s.options.length;i++){const v=+s.options[i].value;
+    if(y===2026){s.options[i].disabled=(v>3&&v!==-1)||(v<-1&&v!==-2)}
+    else{s.options[i].disabled=false}}
+  if(y===2026&&m>3&&m>=0)s.value='-1';
+  if(y===2026&&m<-2)s.value='-1';
+  $('period-badge').textContent=pLabel()+' · in MIDR';render();hlLoad()}
+function se(e){cE=e;document.querySelectorAll('.entity-tab').forEach((t,i)=>t.classList.toggle('active',['consol','gp','atl'][i]===e));document.documentElement.style.setProperty('--accent',EC[e].accent);document.documentElement.style.setProperty('--accent-rgb',EC[e].rgb);document.body.className=e==='gp'?'entity-gp':e==='atl'?'entity-atl':'';render();hlLoad()}
+function sw(s){cS=s;document.querySelectorAll('.stmt-tab').forEach((t,i)=>t.classList.toggle('active',ST[i]===s));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));$('panel-'+s).classList.add('active');render()}
+const gC='rgba(0,0,0,.06)',tC='#6b7280',tF={size:9,family:"'JetBrains Mono',monospace"};
+function bO(){return{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:tC,font:{size:10},boxWidth:10}}},scales:{x:{grid:{color:gC},ticks:{color:tC,font:tF}},y:{grid:{color:gC},ticks:{color:tC,font:tF,callback:v=>fmtS(v)}}}}}
+Chart.defaults.color=tC;Chart.defaults.borderColor=gC;Chart.defaults.font.family="'JetBrains Mono',monospace";
+
+function toggleGroup(btn){
+  const tr=btn.closest('tr');
+  if(tr.classList.contains('no-children'))return;
+  const collapsed=tr.classList.toggle('collapsed');
+  let next=tr.nextElementSibling;
+  while(next&&!next.classList.contains('row-headline')&&!next.classList.contains('row-section')){
+    if(collapsed)next.classList.add('hidden');else next.classList.remove('hidden');
+    next=next.nextElementSibling;
+  }
+}
+function render(){try{({summary:rS,pl:rPL,bs:rBS,cf:rCF,cfp:rCFP})[cS]()}catch(err){console.error(err)}}
+
+// Build KPI card HTML helper
+function kc(label,value,sub,badge,badgeCls){
+  let h='<div class="kpi-card"><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div>';
+  if(sub)h+='<div class="kpi-sub">'+sub+'</div>';
+  if(badge)h+='<div class="kpi-badge '+(badgeCls||'')+'">'+badge+'</div>';
+  return h+'</div>'}
+
+// ═══ SUMMARY ═══
+function rS(){
+  const e=cE,c=EC[e],d=D[e].pl,b=D[e].budget,bs=D[e].bs;
+  const rev=VV(d,'Revenue','Sales'),bRev=VV(b,'Revenue','Sales');
+  const gp=VV(d,'Gross Profit','Gross Margin'),bGP=VV(b,'Gross Profit','Gross Margin');
+  const vol=V(d,'Volume'),bVol=V(b,'Volume');
+  const opex=V(d,'OPEX'),bOpex=V(b,'OPEX');
+  const pbt=V(d,'Profit Before Tax'),bPBT=V(b,'Profit Before Tax');
+  const cash=V(bs,'Cash and Cash Equivalents'),tca=V(bs,'Total Current Assets'),tcl=V(bs,'Total Current Liabilities');
+  const tRcv=V(bs,'Trade Receivables'),tPay=V(bs,'Trade Payables');
+  const cogs=VV(d,'Cost of Revenue','Cost of Sales');
+  const p=gP(),lat=Math.min(p.e,16);
+  const vRev=pV(rev),vGP=pV(gp),vOpex=pV(opex),vPBT=pV(pbt),vVol=pV(vol);
+  const bvRev=pV(bRev),bvGP=pV(bGP),bvOpex=pV(bOpex),bvPBT=pV(bPBT),bvVol=pV(bVol);
+  const gmPct=vRev?(vGP/vRev*100):0,opexPct=vRev?(Math.abs(vOpex)/vRev*100):0;
+  const curRatio=tcl[lat]?tca[lat]/tcl[lat]:0;
+  // Cash cycle (DSO - DPO) for the selected entity, plus a per-business-unit breakdown.
+  const numMonths=p.fy!=null?12:(p.e-p.s+1);
+  const wc=wcCalc(e,p,lat),wcGP=wcCalc('gp',p,lat),wcATL=wcCalc('atl',p,lat);
+  const wcSub='ATL '+(wcATL.valid?wcATL.wcDays.toFixed(0):'n/a')+' · GP '+(wcGP.valid?wcGP.wcDays.toFixed(0):'n/a');
+  // Cash runway in MIDR
+  const avgOpexMo=Math.abs(vOpex)/Math.max(numMonths,1);
+  const cashRunwayMIDR=cash[lat]||0;
+
+  // Var% helper
+  function vp(a,b){return b?((a-b)/Math.abs(b)*100).toFixed(1)+'%':'–'}
+
+  $('sum-lbl').textContent=c.name;$('sum-tag').textContent=e.toUpperCase();
+
+  // Row 1: Volume, Revenue, Gross Margin, OPEX, PBT
+  $('kpi-s1').innerHTML=
+    kc('Volume (MT)',fmt(vVol),'Budget: '+fmt(bvVol),'Var: '+vp(vVol,bvVol),vVol>=bvVol?'badge-pos':'badge-neg')+
+    kc('Revenue',fmt(vRev),'Budget: '+fmt(bvRev),'Var: '+vp(vRev,bvRev),vRev>=bvRev?'badge-pos':'badge-neg')+
+    kc('Gross Margin',fmt(vGP),'Budget: '+fmt(bvGP),'Var: '+vp(vGP,bvGP),vGP>=bvGP?'badge-pos':'badge-neg')+
+    kc('OPEX',fmt(Math.abs(vOpex)),'Budget: '+fmt(Math.abs(bvOpex)),'Var: '+vp(Math.abs(vOpex),Math.abs(bvOpex)),Math.abs(vOpex)<=Math.abs(bvOpex)?'badge-pos':'badge-neg')+
+    kc('Profit (Loss) Before Tax',fmt(vPBT),'Budget: '+fmt(bvPBT),'Var: '+vp(vPBT,bvPBT),vPBT>=bvPBT?'badge-pos':'badge-neg');
+
+  // Row 2: GM%, OPEX/Rev%, Cash Cycle, Current Ratio, Cash Runway
+  const bvRevS=pV(bRev),bvGPS=pV(bGP),bvOpexS=Math.abs(pV(bOpex));
+  const bgmPct=bvRevS?(bvGPS/bvRevS*100):0;
+  const bopexPct=bvRevS?(bvOpexS/bvRevS*100):0;
+  const gmVarPct=gmPct-bgmPct;
+  const opexVarPct=opexPct-bopexPct;
+  $('kpi-s2').innerHTML=
+    kc('Gross Margin to Revenue %',gmPct.toFixed(1)+'%','Budget: '+bgmPct.toFixed(1)+'%','Var: '+gmVarPct.toFixed(1)+'%',gmPct>=bgmPct?'badge-pos':'badge-neg')+
+    kc('OPEX to Revenue %',opexPct.toFixed(1)+'%','Budget: '+bopexPct.toFixed(1)+'%','Var: '+opexVarPct.toFixed(1)+'%',opexPct<=bopexPct?'badge-pos':'badge-neg')+
+    (wc.valid
+      ? kc('Cash Cycle',wc.wcDays.toFixed(0)+' Days',wcSub,
+          wc.wcDays<=0?'Favourable':'Unfavourable',wc.wcDays<=0?'badge-pos':'badge-neg')
+      : kc('Cash Cycle','n/a',wcSub,'Need activity','badge-mod'))+
+    kc('Current Ratio',curRatio.toFixed(2)+'x',null,curRatio>=1?'Healthy':'Below 1x',curRatio>=1?'badge-pos':'badge-neg')+
+    (function(){
+    if(!CFP[e])return kc('Cash Runway','–',null,null);
+    const rw=cfpRunway(e);
+    return kc('Cash Runway',rw.months+' Months','Runway until '+rw.until,null)})();
+
+  // AvB chart (vertical columns)
+  const lbls=gL();
+  dc('c-savb');const fK=[{l:'Gross Margin',a:gp,b:bGP,abs:false},{l:'OPEX',a:opex,b:bOpex,abs:true},{l:'Operating Profit',a:VV(d,'Operating Profit'),b:V(b,'Operating Profit'),abs:false},{l:'PBT',a:pbt,b:V(b,'Profit Before Tax'),abs:false}];
+  ch['c-savb']=new Chart($('c-savb'),{type:'bar',data:{labels:fK.map(k=>k.l),datasets:[{label:'Actual',data:fK.map(k=>k.abs?Math.abs(pV(k.a)):pV(k.a)),backgroundColor:'rgba(37,99,235,.55)',borderRadius:3},{label:'Budget',data:fK.map(k=>k.abs?Math.abs(pV(k.b)):pV(k.b)),backgroundColor:'rgba(156,163,175,.35)',borderRadius:3}]},options:{...bO(),plugins:{legend:{labels:{color:tC,font:{size:9},boxWidth:8}}}}});
+  // Trend
+  dc('c-strend');const sRevS=sR(rev),sGpS=sR(gp);const gmPctArr=sRevS.map((r,i)=>r?(sGpS[i]/r*100):0);
+  ch['c-strend']=new Chart($('c-strend'),{type:'bar',data:{labels:lbls,datasets:[
+    {label:'Revenue',data:sRevS,backgroundColor:c.bar,borderColor:c.accent,borderWidth:1,borderRadius:3,yAxisID:'y',order:2},
+    {label:'GM %',data:gmPctArr,type:'line',borderColor:'#059669',backgroundColor:'rgba(5,150,105,.1)',pointRadius:3,tension:.3,yAxisID:'y1',order:1}
+  ]},options:{...bO(),scales:{x:{grid:{color:gC},ticks:{color:tC,font:tF}},y:{grid:{color:gC},ticks:{color:tC,font:tF,callback:v=>fmtS(v)},position:'left'},y1:{grid:{display:false},ticks:{color:'#059669',font:tF,callback:v=>v.toFixed(0)+'%'},position:'right'}}}});
+  // OPEX pie with % vs total OPEX column
+  // OPEX bar gauge with % of Total OPEX
+  const oI=['Salary & Allowances','Rent & Utility','IT & Maintenance','Buss. Representative','Prof. Services','G&A Expense'];
+  const oK=['Salary & Allowances','Rent & Utility','IT & Maintenance','Business Representative','Professional Services','G & A Expense'];
+  const oV=oK.map(k=>Math.abs(pV(V(d,k))));const oT=oV.reduce((a,b)=>a+b,0)||1;
+  const opexOfTotalPcts=oV.map(v=>((v/oT)*100));
+  let gh='';oI.forEach((l,i)=>{
+    const barW=Math.min(opexOfTotalPcts[i]/Math.max(...opexOfTotalPcts)*100,100);
+    gh+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'+
+      '<span style="font-size:11px;font-weight:500;color:var(--text);min-width:140px">'+l+'</span>'+
+      '<div style="flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden">'+
+        '<div style="height:100%;width:'+barW+'%;background:var(--accent);border-radius:4px"></div></div>'+
+      '<span style="font-family:JetBrains Mono;font-size:11px;font-weight:600;min-width:50px;text-align:right">'+opexOfTotalPcts[i].toFixed(1)+'%</span></div>'});
+  
+  gh+='<div style="margin-top:8px;padding-top:6px;border-top:1px solid #e5e7eb;font-size:10px;color:var(--muted)">'+
+    'Total OPEX / Revenue: <b style="color:var(--text)">'+opexPct.toFixed(1)+'%</b>'+
+    '<span style="margin-left:16px">Total OPEX / Gross Margin: <b style="color:var(--text)">'+(vGP?((Math.abs(vOpex)/Math.abs(vGP))*100).toFixed(1):'0.0')+'%</b></span></div>';
+  $('c-sopex').innerHTML=gh;
+  // Cash
+  dc('c-scash');ch['c-scash']=new Chart($('c-scash'),{type:'bar',data:{labels:lbls,datasets:[{label:'Cash',data:sR(cash),backgroundColor:'rgba(5,150,105,.3)',borderColor:'#059669',borderWidth:1,borderRadius:3}]},options:bO()});
+
+  // Table: Sales, Gross Margin, OPEX(abs), Operating Profit, PBT — columns: Actual|Budget|Variance|Var%
+  const opP=VV(d,'Operating Profit');const bOP=V(b,'Operating Profit');
+  const tI=[{l:'Volume (MT)',a:vol,b:bVol},{l:'Sales',a:rev,b:bRev},{l:'Gross Margin',a:gp,b:bGP,bold:true},{l:'OPEX',a:opex,b:bOpex},{l:'Operating Profit',a:opP,b:bOP,bold:true},{l:'Profit (Loss) Before Tax',a:pbt,b:V(b,'Profit Before Tax'),bold:true}];
+  $('s-th').innerHTML='<tr><th>Description</th><th>Actual</th><th>Budget</th><th>Variance</th><th>Var %</th></tr>';
+  let tb='';tI.forEach(it=>{
+    const bld=it.bold?'font-weight:600':'';
+    let aT=sm(it.a,p.s,p.e),bT=sm(it.b,p.s,p.e);
+    if(it.abs){aT=Math.abs(aT);bT=Math.abs(bT)}
+    const vr=aT-bT,vpc=bT?((vr/Math.abs(bT))*100):0,vc=vr>=0?'pos':'neg';
+    tb+='<tr style="'+bld+'"><td>'+it.l+'</td><td>'+cv(aT)+'</td><td>'+cv(bT)+'</td><td class="var-cell '+vc+'">'+fF(vr)+'</td><td class="var-cell '+vc+'">'+vpc.toFixed(1)+'%</td></tr>'});
+  $('s-tb').innerHTML=tb;
+}
+
+// ═══ P&L ═══
+function rPL(){
+  const e=cE,c=EC[e],d=D[e].pl,b=D[e].budget;
+  const rev=VV(d,'Revenue','Sales'),cogs=VV(d,'Cost of Revenue','Cost of Sales'),gp=VV(d,'Gross Profit','Gross Margin');
+  const opex=V(d,'OPEX'),opP=V(d,'Operating Profit'),pbt=V(d,'Profit Before Tax'),pat=V(d,'Profit After Tax');
+  const depr=VV(d,'Depreciation','Depreciation & Amortization'),otherIE=VV(d,'Other Inc (Exp)','Other Income (Expense)');
+  const taxBen=V(d,'Tax Benefit (Expense)'),cit=V(d,'Corporate Income Tax'),profShare=V(d,'Profit Sharing'),mgtFee=VV(d,'Mgt Fee','Management Fee'),pbmf=V(d,'Profit Before Mgt Fee');
+  const cash=V(D[e].bs,'Cash and Cash Equivalents'),tca=V(D[e].bs,'Total Current Assets'),tcl=V(D[e].bs,'Total Current Liabilities');
+  const tRcv=V(D[e].bs,'Trade Receivables'),tPay=V(D[e].bs,'Trade Payables');
+  const p=gP(),lat=Math.min(p.e,16);
+  const vRev=pV(rev),vGP=pV(gp),vOpex=pV(opex),vOP=pV(opP),vPBT=pV(pbt),vVol=pV(V(d,'Volume'));
+  const bRev=VV(b,'Revenue','Sales'),bGP=VV(b,'Gross Profit','Gross Margin'),bOpex=V(b,'OPEX'),bOP=V(b,'Operating Profit'),bPBT=V(b,'Profit Before Tax');
+  const gmPct=vRev?(vGP/vRev*100):0,opexPct=vRev?(Math.abs(vOpex)/vRev*100):0;
+  const curRatio=tcl[lat]?tca[lat]/tcl[lat]:0;
+  function vp(a,bv){return bv?((a-bv)/Math.abs(bv)*100).toFixed(1)+'%':'–'}
+
+  $('pl-lbl').textContent=c.name;$('pl-tag').textContent=e.toUpperCase();
+
+  // Row 1
+  const bvOpexPL=Math.abs(pV(bOpex)),avOpexPL=Math.abs(vOpex);
+  $('kpi-p1').innerHTML=
+    kc('Volume (MT)',fmt(vVol),'Budget: '+fmt(pV(V(b,'Volume'))),'Var: '+vp(vVol,pV(V(b,'Volume'))),vVol>=pV(V(b,'Volume'))?'badge-pos':'badge-neg')+
+    kc('Revenue',fmt(vRev),'Budget: '+fmt(pV(bRev)),'Var: '+vp(vRev,pV(bRev)),vRev>=pV(bRev)?'badge-pos':'badge-neg')+
+    kc('Gross Margin',fmt(vGP),'Budget: '+fmt(pV(bGP)),'Var: '+vp(vGP,pV(bGP)),vGP>=pV(bGP)?'badge-pos':'badge-neg')+
+    kc('OPEX',fmt(avOpexPL),'Budget: '+fmt(bvOpexPL),'Var: '+vp(avOpexPL,bvOpexPL),avOpexPL<=bvOpexPL?'badge-pos':'badge-neg')+
+    kc('Profit (Loss) Before Tax',fmt(vPBT),'Budget: '+fmt(pV(bPBT)),'Var: '+vp(vPBT,pV(bPBT)),vPBT>=pV(bPBT)?'badge-pos':'badge-neg');
+
+  // Row 2
+
+
+  const lbls=gL();
+  dc('c-prg');const sRevP=sR(rev),sGpP=sR(gp);const gmPctP=sRevP.map((r,i)=>r?(sGpP[i]/r*100):0);
+  ch['c-prg']=new Chart($('c-prg'),{type:'bar',data:{labels:lbls,datasets:[
+    {label:'Revenue',data:sRevP,backgroundColor:c.bar,borderColor:c.accent,borderWidth:1,borderRadius:3,yAxisID:'y',order:2},
+    {label:'GM %',data:gmPctP,type:'line',borderColor:'#059669',backgroundColor:'rgba(5,150,105,.1)',pointRadius:3,tension:.3,yAxisID:'y1',order:1}
+  ]},options:{...bO(),scales:{x:{grid:{color:gC},ticks:{color:tC,font:tF}},y:{grid:{color:gC},ticks:{color:tC,font:tF,callback:v=>fmtS(v)},position:'left'},y1:{grid:{display:false},ticks:{color:'#059669',font:tF,callback:v=>v.toFixed(0)+'%'},position:'right'}}}});
+  dc('c-popex');const oI2=['Salary & Allow.','Rent & Utility','IT & Maint.','Buss. Rep.','Prof. Services','G&A Expense'];
+  const oK2=['Salary & Allowances','Rent & Utility','IT & Maintenance','Business Representative','Professional Services','G & A Expense'];
+  const oV2=oK2.map(k=>Math.abs(pV(V(d,k))));const oT2=oV2.reduce((a,b)=>a+b,0)||1;
+  const oLbl2=oI2.map((l,i)=>l+' ('+((oV2[i]/oT2)*100).toFixed(1)+'%)');
+  ch['c-popex']=new Chart($('c-popex'),{type:'doughnut',data:{labels:oLbl2,datasets:[{data:oV2,backgroundColor:c.doughnut,borderWidth:0}]},options:{plugins:{legend:{position:'right',labels:{color:tC,font:{size:9},boxWidth:8}},tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+fmt(ctx.raw)+' MIDR'}}}}}});
+  dc('c-pavb');const avK=[['Gross Margin','Gross Profit','Gross Margin'],['OPEX','OPEX'],['Operating Profit','Operating Profit'],['PBT','Profit Before Tax']];
+  ch['c-pavb']=new Chart($('c-pavb'),{type:'bar',data:{labels:avK.map(k=>k[0]),datasets:[{label:'Actual',data:avK.map(k=>{const v=pV(VV(d,...k.slice(1)));return k[0]==='OPEX'?Math.abs(v):v}),backgroundColor:'rgba(37,99,235,.5)',borderRadius:3},{label:'Budget',data:avK.map(k=>{const v=pV(VV(b,...k.slice(1)));return k[0]==='OPEX'?Math.abs(v):v}),backgroundColor:'rgba(156,163,175,.3)',borderRadius:3}]},options:{...bO(),plugins:{legend:{labels:{color:tC,font:{size:9},boxWidth:8}}}}});
+  dc('c-pop');ch['c-pop']=new Chart($('c-pop'),{type:'bar',data:{labels:lbls,datasets:[{label:'Operating Profit',data:sR(opP),backgroundColor:sR(opP).map(v=>v>=0?'rgba(5,150,105,.4)':'rgba(220,38,38,.4)'),borderRadius:3}]},options:{...bO(),plugins:{legend:{display:false}}}});
+
+  // Table
+  const tS=p.s,tE=p.e,hd=aH(),tL=[];for(let i=tS;i<=tE&&i<17;i++)tL.push(hd[i]);
+  let th='<tr><th>Description</th>';tL.forEach(l=>{th+='<th>'+l+'</th>'});if(tL.length>1)th+='<th>Total</th>';th+='</tr>';$('p-th').innerHTML=th;
+  const vol=V(d,'Volume');
+  const gmPctArr=rev.map((r,i)=>r?(gp[i]/r*100):0);
+  const ebitda=V(d,'EBITDA');
+  const plR=[
+    {l:'Total Volume (MT)',arr:vol,isMT:true,hl:true,noKids:true},
+    {l:'Sales',arr:rev,hl:true},
+    {l:e==='consol'?'Cost of Revenue':'Cost of Sales',arr:cogs,child:true},
+    {l:'Gross Margin',arr:gp,hl:true,hlColor:'accent',noKids:true},
+    {l:'Gross Margin (%)',arr:gmPctArr,isPct:true,child:true},
+    {l:'OPEX',arr:opex,hl:true},
+    ...['Salary & Allowances','Rent & Utility','IT & Maintenance','Business Representative','Professional Services','G & A Expense','Corporate Communication','CSR'].map(k=>({l:k,arr:V(d,k),cls:'indent1',child:true})),
+    {l:'EBITDA',arr:ebitda,hl:true,hlColor:'accent',noKids:true},
+    {l:'Operating Profit',arr:opP,hl:true,hlColor:'accent'},
+    {l:'Depreciation',arr:depr,child:true},
+    {l:'Other Inc (Exp)',arr:otherIE,hl:true,noKids:true},
+    {l:'Profit Before Mgt Fee',arr:pbmf,hl:true},
+    {l:'Profit Sharing',arr:profShare,child:true},
+    {l:e==='consol'?'Mgt Fee':'Management Fee',arr:mgtFee,child:true},
+    {l:'Profit (Loss) Before Tax',arr:pbt,hl:true,hlColor:'accent',noKids:true}];
+  let tb2='';plR.forEach(r=>{
+    const hlCls=r.hl?(r.noKids?'row-headline no-children':'row-headline collapsed'):'';
+    const colorCls=r.hlColor==='accent'?'row-hl-accent':'';
+    const chCls=r.child?'row-child hidden':'';
+    tb2+='<tr class="'+(r.cls||'')+' '+hlCls+' '+colorCls+' '+chCls+'"'+(r.hl?' onclick="toggleGroup(this)"':'')+'><td>'+r.l+'</td>';let tot=0;
+    for(let i=tS;i<=tE&&i<(r.arr||[]).length;i++){
+      if(r.isPct){tb2+='<td style="color:var(--text)">'+(r.arr[i]!=null?r.arr[i].toFixed(1)+'%':'–')+'</td>'}
+      else{tb2+='<td>'+cv(r.arr[i])+'</td>';tot+=(r.arr[i]||0)}}
+    if(tL.length>1){
+      if(r.isPct){const totRev=sm(rev,tS,tE),totGP=sm(gp,tS,tE);tb2+='<td style="color:var(--text)">'+(totRev?(totGP/totRev*100).toFixed(1)+'%':'–')+'</td>'}
+      else{tb2+='<td>'+cv(tot)+'</td>'}}
+    tb2+='</tr>'});$('p-tb').innerHTML=tb2;
+}
+
+// ═══ BS ═══
+function rBS(){
+  const e=cE,c=EC[e],d=D[e].bs,p=gP(),lat=Math.min(p.e,16);
+  const ta=V(d,'Total Assets'),tl=V(d,'Total Liabilities'),te=V(d,'Total Equity'),cash=V(d,'Cash and Cash Equivalents');
+  const tca=V(d,'Total Current Assets'),tcl=V(d,'Total Current Liabilities');
+  const curR=tcl[lat]?tca[lat]/tcl[lat]:0,deR=te[lat]?tl[lat]/te[lat]:0,eqR=ta[lat]?te[lat]/ta[lat]*100:0;
+  const wc=(tca[lat]||0)-(tcl[lat]||0);
+  // Average cash
+  const cashArr=sR(cash);const avgCash=cashArr.length?cashArr.reduce((a,b)=>a+(b||0),0)/cashArr.length:0;
+
+  $('bs-lbl').textContent=c.name;$('bs-tag').textContent=e.toUpperCase();
+  $('kpi-bs').innerHTML=
+    kc('Total Assets',fmt(ta[lat]),null,null)+
+    kc('Total Liabilities',fmt(tl[lat]),null,null)+
+    kc('Total Equity',fmt(te[lat]),null,null)+
+    kc('Current Ratio',curR.toFixed(2)+'x',null,curR>=1?'Healthy':'Below 1x',curR>=1?'badge-pos':'badge-neg')+
+    kc('Debt to Equity',deR.toFixed(2)+'x',null,'Moderate','badge-mod')+
+    kc('Cash',fmt(cash[lat]),'Avg Cash: '+fmt(avgCash),null);
+
+  const lbls=gL();
+  dc('c-bal');ch['c-bal']=new Chart($('c-bal'),{type:'bar',data:{labels:lbls,datasets:[{label:'Assets',data:sR(ta),backgroundColor:'rgba(5,150,105,.3)',borderColor:'#059669',borderWidth:1,borderRadius:3},{label:'Liabilities',data:sR(tl),backgroundColor:'rgba(220,38,38,.2)',borderColor:'#dc2626',borderWidth:1,borderRadius:3}]},options:bO()});
+  dc('c-bacomp');ch['c-bacomp']=new Chart($('c-bacomp'),{type:'doughnut',data:{labels:['Cash','Trade Receivable','Other Receivable','Prepaid Tax','Advance','Fixed Assets'],datasets:[{data:['Cash and Cash Equivalents','Trade Receivables','Other Receivables','Prepaid Taxes','Advance Payment to Vendor','Fixed Asset - nett'].map(k=>Math.abs(V(d,k)[lat]||0)),backgroundColor:c.doughnut,borderWidth:0}]},options:{plugins:{legend:{position:'right',labels:{color:tC,font:{size:9},boxWidth:8}}}}});
+  dc('c-bliab');ch['c-bliab']=new Chart($('c-bliab'),{type:'doughnut',data:{labels:['Trade Payable','Other Payable','Tax Payable','Advances','Accrued','Lease','Employee'],datasets:[{data:['Trade Payables','Other Payables','Taxes Payable','Advances from Customer','Accrued Expenses','Lease (Current)','Post Employee Benefits'].map(k=>Math.abs(V(d,k)[lat]||0)),backgroundColor:c.doughnut.concat(['#d1d5db']),borderWidth:0}]},options:{plugins:{legend:{position:'right',labels:{color:tC,font:{size:9},boxWidth:8}}}}});
+
+  const tS=p.s,tE=p.e,hd=aH(),tL=[];for(let i=tS;i<=tE&&i<17;i++)tL.push(hd[i]);
+  let th='<tr><th>Description</th>';tL.forEach(l=>{th+='<th>'+l+'</th>'});th+='</tr>';$('b-th').innerHTML=th;
+  const bsG=[
+    {l:'Total Assets',arr:ta,hl:true,hlColor:'dark',noKids:true},
+    {l:'Total Current Assets',arr:tca,hl:true},
+    ...['Cash and Cash Equivalents','Trade Receivables','Other Receivables','Other Current Assets','Prepaid Taxes','Prepaid Expenses','Advance Payment to Vendor'].map(k=>({l:k,arr:V(d,k),cls:'indent1',child:true})),
+    {l:'Total Non Current Assets',arr:V(d,'Total Non Current Assets'),hl:true},
+    ...['Fixed Asset - nett','Deferred Tax Assets','Allowance for Impairment Loss','Other Non Current Assets'].map(k=>({l:k,arr:V(d,k),cls:'indent1',child:true})),
+    {l:'Total Liabilities',arr:tl,hl:true,hlColor:'accent'},
+    {l:'Total Current Liabilities',arr:tcl,hl:true},
+    ...['Trade Payables','Other Payables','Taxes Payable','Advances from Customer','Accrued Expenses','Lease (Current)','Other Current Liabilities'].map(k=>({l:k,arr:V(d,k),cls:'indent1',child:true})),
+    {l:'Total Non Current Liabilities',arr:V(d,'Total Non Current Liabilities'),hl:true},
+    ...['Post Employee Benefits','Lease (Non-current)'].map(k=>({l:k,arr:V(d,k),cls:'indent1',child:true})),
+    {l:'Total Equity',arr:te,hl:true,hlColor:'accent'},
+    ...['Capital Stock','Retained Earnings','Dividend','Current Earning of Year'].map(k=>({l:k,arr:V(d,k),cls:'indent1',child:true})),
+    {l:'Total Liab & Equity',arr:V(d,'Total Liab & Equity'),hl:true,hlColor:'dark',noKids:true}];
+  let tb='';bsG.forEach(r=>{
+    const hlCls=r.hl?(r.noKids?'row-headline no-children':'row-headline collapsed'):'';
+    const colorCls=r.hlColor==='dark'?'row-hl-dark':r.hlColor==='green'?'row-hl-green':r.hlColor==='accent'?'row-hl-accent':'';
+    const chCls=r.child?'row-child hidden':'';
+    tb+='<tr class="'+(r.cls||'')+' '+hlCls+' '+colorCls+' '+chCls+'"'+(r.hl?' onclick="toggleGroup(this)"':'')+'><td>'+r.l+'</td>';
+    for(let i=tS;i<=tE&&i<(r.arr||[]).length;i++)tb+='<td>'+cv(r.arr[i])+'</td>';tb+='</tr>'});$('b-tb').innerHTML=tb;
+}
+
+// ═══ CF ═══
+function rCF(){
+  const e=cE,c=EC[e],d=D[e].cf,opCF=V(d,'Net CF Operating'),invCF=V(d,'Net CF Investing'),finCF=V(d,'Net CF Financing');
+  const endBal=V(d,'Ending Balance'),begBal=V(d,'Beginning Balance');
+  const p=gP(),lat=Math.min(p.e,16),vOp=pV(opCF),vInv=pV(invCF),vFin=pV(finCF),vEnd=endBal[lat]||0,vBeg=begBal[p.s]||0;
+  $('cf-lbl').textContent=EC[e].name;$('cf-tag').textContent=e.toUpperCase();
+  const cfChg=vBeg?(((vEnd-vBeg)/Math.abs(vBeg))*100):0;
+  const cfArr=vEnd>=vBeg?'↑':'↓';
+  $('kpi-cf').innerHTML=kc('Operating CF',fmt(vOp),null,null)+kc('Investing CF',fmt(vInv),null,null)+kc('Financing CF',fmt(vFin),null,null)+kc('Beginning Balance',fmt(vBeg),null,null)+kc('Ending Balance',fmt(vEnd),cfArr+' '+Math.abs(cfChg).toFixed(1)+'% from beginning balance',null);
+  const lbls=gL();
+  dc('c-cbal');ch['c-cbal']=new Chart($('c-cbal'),{type:'line',data:{labels:lbls,datasets:[{label:'Ending',data:sR(endBal),borderColor:c.accent,backgroundColor:c.fill,fill:true,tension:.3,pointRadius:4},{label:'Beginning',data:sR(begBal),borderColor:'#9ca3af',borderDash:[4,3],tension:.3,pointRadius:2}]},options:bO()});
+  dc('c-cnet');const netD=V(d,'Net increase/(decrease)');ch['c-cnet']=new Chart($('c-cnet'),{type:'bar',data:{labels:lbls,datasets:[{label:'Cash Movement',data:sR(netD),backgroundColor:sR(netD).map(v=>v>=0?'rgba(5,150,105,.5)':'rgba(220,38,38,.5)'),borderRadius:3}]},options:{...bO(),plugins:{legend:{display:false}}}});
+  const tS=p.s,tE=p.e,hd=aH(),tL=[];for(let i=tS;i<=tE&&i<17;i++)tL.push(hd[i]);
+  let th='<tr><th>Description</th>';tL.forEach(l=>{th+='<th>'+l+'</th>'});if(tL.length>1)th+='<th>Total</th>';th+='</tr>';$('f-th').innerHTML=th;
+  const cfR=[
+    {l:'Net CF Operating',arr:opCF,hl:true},
+    ...['Collection from customer','Payment raw materials','Payment non-mat COGS','Payment of taxes','Hedging Cost & Forex','Payment OPEX (employee)','Payment OPEX & Other','Interest income','Other income','Bank admin','Revaluation','Tax Refund','Security Deposit','Management Fee'].map(k=>({l:k,arr:V(d,k),cls:'indent1',child:true})),
+    {l:'Net CF Investing',arr:invCF,hl:true},
+    ...['Acq/Sales Fixed Asset','Proceeds Sale FA','Deposit','Government Bonds'].map(k=>({l:k,arr:V(d,k),cls:'indent1',child:true})),
+    {l:'Net CF Financing',arr:finCF,hl:true},
+    ...['Capital Injection','Dividends Paid','Other Receivables','Received Svc Payment','Loan Recv Related','Loan Recv Third'].map(k=>({l:k,arr:V(d,k),cls:'indent1',child:true})),
+    {l:'Net Increase/(Decrease)',arr:netD,hl:true,noKids:true},
+    {l:'Beginning Balance',arr:begBal,hl:true,noSum:'first',noKids:true},
+    {l:'Ending Balance',arr:endBal,hl:true,noSum:'last',noKids:true}];
+  let tb='';cfR.forEach(r=>{
+    const hlCls=r.hl?(r.noKids?'row-headline no-children':'row-headline collapsed'):'';
+    const chCls=r.child?'row-child hidden':'';
+    tb+='<tr class="'+(r.cls||'')+' '+hlCls+' '+chCls+'"'+(r.hl?' onclick="toggleGroup(this)"':'')+'><td>'+r.l+'</td>';
+    let tot=0;let first=0,last=0,fi=true;
+    for(let i=tS;i<=tE&&i<(r.arr||[]).length;i++){tb+='<td>'+cv(r.arr[i])+'</td>';tot+=(r.arr[i]||0);if(fi){first=r.arr[i]||0;fi=false}last=r.arr[i]||0}
+    if(tL.length>1){const tv=r.noSum==='first'?first:r.noSum==='last'?last:tot;tb+='<td>'+cv(tv)+'</td>'}
+    tb+='</tr>'});$('f-tb').innerHTML=tb;
+}
+
+// ═══ CFP ═══
+function rCFP(){
+  const e=cE,c=EC[e],cf=CFP[e];const cfM=['May-26','Jun-26','Jul-26'];
+  const end=cf['Ending Cash Balance'],beg=cf['Beginning Cash Balance'],opex=cf['Total OPEX'],trade=cf['Cash from trading operations'],cashOps=cf['Cash from operating activities'];
+  const avgOp=opex.reduce((a,b)=>a+Math.abs(b),0)/opex.length;
+  const rw=cfpRunway(e);
+  $('cfp-lbl').textContent=EC[e].name;$('cfp-tag').textContent=e.toUpperCase();
+  $('kpi-cfp').style.gridTemplateColumns='repeat(3,1fr)';
+  $('kpi-cfp').innerHTML=kc('Avg OPEX/Month',fmt(avgOp),null,null)+kc('Cash Runway',rw.months+' Months','Runway until '+rw.until,null)+kc('Ending Cash in '+cfM[cfM.length-1],fmt(end[end.length-1]),null,null);
+  dc('c-cfpbal');ch['c-cfpbal']=new Chart($('c-cfpbal'),{type:'line',data:{labels:cfM,datasets:[{label:'Ending Cash',data:end,borderColor:c.accent,backgroundColor:c.fill,fill:true,tension:.3,pointRadius:4,pointBackgroundColor:c.accent}]},options:bO()});
+  let th='<tr><th>Description</th>';cfM.forEach(m=>{th+='<th>'+m+'</th>'});th+='</tr>';$('fp-th').innerHTML=th;
+  const cfpR=[{l:'Beginning Cash Balance',arr:beg,cls:'row-subtotal'},{title:'TRADING'},{l:'Remaining Collections',arr:cf['Remaining Collections from Customer'],cls:'indent1'},{l:'Remaining Pmt - Raw Material',arr:cf['Remaining Payment - Raw Material'],cls:'indent1'},{l:'Remaining Pmt - Other COGS',arr:cf['Remaining Payment - Other COGS'],cls:'indent1'},{l:'Net Inflow/(Outflow)',arr:cf['Net Inflow / (Outflow)'],cls:'row-subtotal'},{l:'Cash from trading ops',arr:trade,cls:'row-subtotal'},{l:'Total OPEX',arr:opex},{l:'Cash from operating activities',arr:cashOps,cls:'row-subtotal'},{title:'ANTICIPATED'},{l:'CAPEX Vehicles',arr:cf['CAPEX Vehicles'],cls:'indent1'},{l:'Bonds coupon',arr:cf['Bonds coupon'],cls:'indent1'},{l:'Bank Loan',arr:cf['Bank Loan'],cls:'indent1'},{l:'Management Fee',arr:cf['Management Fee'],cls:'indent1'},{l:'Others',arr:cf['Others'],cls:'indent1'},{l:'Ending Cash Balance',arr:end,cls:'row-total'}];
+  let tb='';cfpR.forEach(r=>{if(r.title){tb+='<tr class="row-section"><td colspan="4">'+r.title+'</td></tr>';return}tb+='<tr class="'+(r.cls||'')+'"><td>'+r.l+'</td>';(r.arr||[]).forEach(v=>{tb+='<td>'+cv(v)+'</td>'});tb+='</tr>'});$('fp-tb').innerHTML=tb;
+}
+
+// ---- Highlights: per entity AND per period; live Suggestion; Save locks; Change unlocks (password) ----
+function pLabel(){const y=gY(),m=gM();
+  if(m===-1)return y===2025?'FY 2025':'YTD 2026';
+  if(m===-2)return 'Q1 '+y;
+  if(m===-3)return 'Q2 '+y;
+  if(m===-4)return 'Q3 '+y;
+  if(m===-5)return 'Q4 '+y;
+  return MO[m]+'-'+String(y).slice(2);}
+function hlKey(){return 'mrdash_hl_'+cE+'_'+gY()+'_'+gM();}   // unique per entity + period
+function hlStore(saved){
+  const ta=$('hl-text');if(!ta)return;
+  try{localStorage.setItem(hlKey(),JSON.stringify({t:ta.value,s:saved?1:0}));}catch(e){}
+}
+function hlSave(){if(!$('hl-text').readOnly)hlStore(0);}   // silent auto-save while editable
+function hlSetLocked(locked){
+  const ta=$('hl-text'),card=$('hl-card');if(!ta)return;
+  ta.readOnly=locked;
+  card.classList.toggle('hl-locked',locked);
+  card.classList.remove('hl-pwon');
+}
+function hlLoad(){
+  const ta=$('hl-text');if(!ta)return;
+  let rec=null;
+  try{const raw=localStorage.getItem(hlKey());if(raw)rec=JSON.parse(raw);}catch(e){}
+  ta.value=rec?rec.t:'';
+  hlSetLocked(rec?!!rec.s:false);
+  if($('hl-tag'))$('hl-tag').textContent=cE.toUpperCase()+' · '+pLabel();
+  if($('hl-status'))$('hl-status').textContent=(rec&&rec.s)?'Saved & locked — click Change to edit.':'';
+}
+function hlSaveClick(){
+  if($('hl-text').readOnly)return;
+  hlStore(1);hlSetLocked(true);
+  $('hl-status').textContent='Saved \u2713 '+new Date().toTimeString().slice(0,5)+' — locked.';
+}
+function hlChangeShow(){
+  $('hl-card').classList.add('hl-pwon');
+  $('hl-pwin').value='';$('hl-status').textContent='';
+  try{$('hl-pwin').focus();}catch(e){}
+}
+function hlUnlock(){
+  if($('hl-pwin').value==='FPA'){
+    hlSetLocked(false);hlStore(0);
+    $('hl-status').textContent='Unlocked — edit and Save again when done.';
+  }else{
+    $('hl-status').textContent='Incorrect password.';
+  }
+}
+function hlToggle(){$('hl-card').classList.toggle('collapsed');}
+// Live suggested analysis for the selected entity + period, generated from the data.
+function hlSuggest(){
+  const ta=$('hl-text');if(!ta||ta.readOnly)return;
+  const e=cE,pl=D[e].pl,bd=D[e].budget,bs=D[e].bs,p=gP(),lat=Math.min(p.e,16);
+  const rev=VV(pl,'Revenue','Sales'),cog=VV(pl,'Cost of Revenue','Cost of Sales');
+  const R=pV(rev),G=R+pV(cog),OX=Math.abs(pV(pl['OPEX'])),EB=pV(pl['EBITDA']);
+  const OP=pV(pl['Operating Profit']),PB=pV(pl['Profit Before Tax']),PA=pV(pl['Profit After Tax']);
+  const bR=pV(VV(bd,'Revenue','Sales')),bOP=pV(bd['Operating Profit']),bPB=pV(bd['Profit Before Tax']);
+  const gm=R?G/R*100:0,ox=R?OX/R*100:0;
+  const wc=wcCalc(e,p,lat);
+  const cash=bs['Cash and Cash Equivalents'][lat]||0;
+  const tca=bs['Total Current Assets'][lat]||0,tcl=bs['Total Current Liabilities'][lat]||0;
+  const cr=tcl?tca/tcl:0;
+  const f=function(n){return Math.round(n).toLocaleString('en-US');};
+  const vp=function(a,b){return b?((a/b-1)*100):0;};
+  const span=(p.e>p.s||p.fy!=null)?'period':'month';
+  const L=[];
+  L.push('- '+EC[e].name+' \u2014 '+pLabel()+': revenue of MIDR '+f(R)+(bR?' ('+(vp(R,bR)>=0?'+':'')+vp(R,bR).toFixed(0)+'% vs budget)':'')+'.');
+  L.push('- Gross margin '+gm.toFixed(1)+'% (gross profit MIDR '+f(G)+'); OPEX MIDR '+f(OX)+' = '+ox.toFixed(1)+'% of revenue; EBITDA MIDR '+f(EB)+'.');
+  L.push('- Operating profit MIDR '+f(OP)+(bOP?' (budget MIDR '+f(bOP)+')':'')+'; profit before tax MIDR '+f(PB)+'; net result (PAT) MIDR '+f(PA)+'.');
+  if(PA>0.5) L.push('- The '+span+' was profitable at the bottom line'+(PB<bPB?', though below the budgeted result.':'.'));
+  else if(PA<-0.5) L.push('- The '+span+' recorded a net loss \u2014 review the main margin or cost drivers.');
+  else L.push('- The '+span+' was around breakeven at the bottom line.');
+  L.push('- Liquidity: cash MIDR '+f(cash)+', current ratio '+cr.toFixed(2)+'x'+(wc.valid?', cash cycle ~'+wc.wcDays.toFixed(0)+' days':'')+'.');
+  L.push('- [Add management commentary and action points here.]');
+  ta.value=L.join('\n');
+  hlStore(0);
+  $('hl-status').textContent='Suggestion inserted \u2014 edit as needed, then Save.';
+}
+onPC();hlLoad();
+</script></body></html>

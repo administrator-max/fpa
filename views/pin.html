@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial Performance Dashboard — Access</title>
+
+<!-- Anti-crawl -->
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+<meta name="googlebot" content="noindex, nofollow">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+  /* Palette mirrored from the dashboard (index.html) */
+  :root {
+    --bg:        #f4f5f7;
+    --surface:   #ffffff;
+    --surface2:  #f9fafb;
+    --border:    #e5e7eb;
+    --text:      #111827;
+    --muted:     #6b7280;
+    --accent:    #2563eb;
+    --accent2:   #1d4ed8;
+    --accent-rgb:37,99,235;
+    --red:       #dc2626;
+    --shadow:    0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+    --shadow-lg: 0 10px 40px rgba(17,24,39,.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 400;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Faint grid backdrop */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(var(--accent-rgb),0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(var(--accent-rgb),0.035) 1px, transparent 1px);
+    background-size: 44px 44px;
+    pointer-events: none; z-index: 0;
+  }
+
+  .pin-wrapper {
+    position: relative; z-index: 1;
+    width: 100%;
+    max-width: 380px;
+    padding: 0 24px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* Brand */
+  .brand {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .brand-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .brand-dot {
+    width: 9px; height: 9px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(var(--accent-rgb),.12);
+  }
+  .brand-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 400;
+    color: var(--muted);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-top: 12px;
+  }
+
+  /* Card */
+  .pin-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 30px 30px 26px;
+    box-shadow: var(--shadow-lg);
+  }
+  .pin-card::before {
+    content: '';
+    display: block;
+    height: 3px;
+    width: 38px;
+    margin: 0 auto 22px;
+    background: var(--accent);
+    border-radius: 3px;
+    opacity: .85;
+  }
+
+  .card-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 22px;
+  }
+
+  /* PIN dots */
+  .pin-dots {
+    display: flex;
+    justify-content: center;
+    gap: 13px;
+    margin-bottom: 24px;
+  }
+  .dot {
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--surface2);
+    transition: all 0.18s;
+  }
+  .dot.filled {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(var(--accent-rgb),.12);
+  }
+  .dot.error {
+    background: var(--red);
+    border-color: var(--red);
+    box-shadow: 0 0 0 4px rgba(220,38,38,.12);
+    animation: shake 0.4s ease;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
+  /* Numpad */
+  .numpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 9px;
+  }
+  .key {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 15px 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 19px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.14s;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .key:hover {
+    background: rgba(var(--accent-rgb),.07);
+    border-color: rgba(var(--accent-rgb),.4);
+    color: var(--accent);
+  }
+  .key:active { transform: scale(0.96); }
+  .key.key-del {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--muted);
+  }
+  .key.key-del:hover { color: var(--red); border-color: rgba(220,38,38,.4); background: rgba(220,38,38,.06); }
+  .key.key-enter {
+    background: var(--accent);
+    border-color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  .key.key-enter:hover { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+  .key.key-enter:disabled,
+  .key.key-enter.loading { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+  /* Error message */
+  .error-msg {
+    text-align: center;
+    margin-top: 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--red);
+    letter-spacing: 0.04em;
+    min-height: 14px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .error-msg.visible { opacity: 1; }
+
+  /* Footer */
+  .pin-footer {
+    text-align: center;
+    margin-top: 26px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    color: var(--muted);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: .7;
+  }
+
+  #pinForm { display: none; }
+</style>
+</head>
+<body>
+
+<div class="pin-wrapper">
+
+  <div class="brand">
+    <div class="brand-logo"><span class="brand-dot"></span>Financial Performance Dashboard</div>
+    <div class="brand-sub">GP · ATL · Consolidated</div>
+  </div>
+
+  <div class="pin-card">
+    <div class="card-label">Enter Access PIN</div>
+
+    <div class="pin-dots" id="pinDots">
+      <div class="dot" id="d0"></div>
+      <div class="dot" id="d1"></div>
+      <div class="dot" id="d2"></div>
+      <div class="dot" id="d3"></div>
+      <div class="dot" id="d4"></div>
+      <div class="dot" id="d5"></div>
+    </div>
+
+    <div class="numpad">
+      <div class="key" onclick="press('1')">1</div>
+      <div class="key" onclick="press('2')">2</div>
+      <div class="key" onclick="press('3')">3</div>
+      <div class="key" onclick="press('4')">4</div>
+      <div class="key" onclick="press('5')">5</div>
+      <div class="key" onclick="press('6')">6</div>
+      <div class="key" onclick="press('7')">7</div>
+      <div class="key" onclick="press('8')">8</div>
+      <div class="key" onclick="press('9')">9</div>
+      <div class="key key-del" onclick="del()">&#9003;</div>
+      <div class="key" onclick="press('0')">0</div>
+      <div class="key key-enter" id="enterBtn" onclick="submit()">Enter</div>
+    </div>
+
+    <div class="error-msg" id="errorMsg">Incorrect PIN. Please try again.</div>
+  </div>
+
+  <div class="pin-footer">Restricted Access · Internal Use Only</div>
+</div>
+
+<form id="pinForm" method="POST" action="/pin">
+  <input type="hidden" name="pin" id="pinInput">
+</form>
+
+<script>
+  let entered = '';
+  const MAX = 6;
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('error') === '1') showError();
+  if (params.get('timeout') === '1') {
+    const el = document.getElementById('errorMsg');
+    el.textContent = 'Session expired due to inactivity.';
+    el.classList.add('visible');
+  }
+
+  function press(digit) {
+    if (entered.length >= MAX) return;
+    entered += digit;
+    updateDots();
+    clearError();
+    if (entered.length === MAX) setTimeout(submit, 180);
+  }
+
+  function del() {
+    if (entered.length === 0) return;
+    entered = entered.slice(0, -1);
+    updateDots();
+    clearError();
+  }
+
+  function submit() {
+    if (entered.length === 0) return;
+    const btn = document.getElementById('enterBtn');
+    btn.classList.add('loading');
+    btn.textContent = '...';
+    document.getElementById('pinInput').value = entered;
+    document.getElementById('pinForm').submit();
+  }
+
+  function updateDots() {
+    for (let i = 0; i < MAX; i++) {
+      const dot = document.getElementById('d' + i);
+      dot.classList.toggle('filled', i < entered.length);
+      dot.classList.remove('error');
+    }
+  }
+
+  function showError() {
+    for (let i = 0; i < MAX; i++) {
+      const dot = document.getElementById('d' + i);
+      dot.classList.remove('filled');
+      dot.classList.add('error');
+    }
+    document.getElementById('errorMsg').classList.add('visible');
+    entered = '';
+    setTimeout(() => {
+      for (let i = 0; i < MAX; i++) document.getElementById('d' + i).classList.remove('error');
+    }, 600);
+  }
+
+  function clearError() {
+    document.getElementById('errorMsg').classList.remove('visible');
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key >= '0' && e.key <= '9') press(e.key);
+    else if (e.key === 'Backspace') del();
+    else if (e.key === 'Enter') submit();
+  });
+</script>
+</body>
+</html>
