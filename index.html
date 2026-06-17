@@ -540,6 +540,9 @@ function rCFP(){
 }
 
 // ---- Highlights: per entity AND per period; live Suggestion; Save locks; Change unlocks (password) ----
+// HL_STORE is embedded in the file so highlights travel with the HTML everywhere.
+// localStorage is used as a fallback cache for unsaved edits; the file object is the source of truth.
+const HL_STORE={"mrdash_hl_consol_2026_4":{"t":"Volume reached 1,393 MT, or 27% of budget. Margin quality strengthened to 12.7%, exceeding the 9.3% budget.\nCore margin (exc. Slab Sales) YTD May 2026 improved from 8.0% to 10.6% on the continuing business, despite volume pressure from quota constraints and the exit of low-margin slab sales.\nYTD OPEX of IDR 23.9bn is 22% below plan (IDR 6.8bn favorable), while May OPEX was 29% below plan (IDR 1.7bn favorable), driven by headcount adjustments, lower salary and benefit costs, business representative, and also G&A expense.\nMost of the unrealized FX impact is expected to be recovered through realized gains as hedged AP positions mature and are settled.","s":1}};
 function pLabel(){const y=gY(),m=gM();
   if(m===-1)return y===2025?'FY 2025':'YTD 2026';
   if(m===-2)return 'Q1 '+y;
@@ -547,12 +550,15 @@ function pLabel(){const y=gY(),m=gM();
   if(m===-4)return 'Q3 '+y;
   if(m===-5)return 'Q4 '+y;
   return MO[m]+'-'+String(y).slice(2);}
-function hlKey(){return 'mrdash_hl_'+cE+'_'+gY()+'_'+gM();}   // unique per entity + period
+function hlKey(){return 'mrdash_hl_'+cE+'_'+gY()+'_'+gM();}
 function hlStore(saved){
   const ta=$('hl-text');if(!ta)return;
-  try{localStorage.setItem(hlKey(),JSON.stringify({t:ta.value,s:saved?1:0}));}catch(e){}
+  const rec={t:ta.value,s:saved?1:0};
+  HL_STORE[hlKey()]=rec;
+  // also mirror to localStorage so unsaved edits survive tab refreshes
+  try{localStorage.setItem(hlKey(),JSON.stringify(rec));}catch(e){}
 }
-function hlSave(){if(!$('hl-text').readOnly)hlStore(0);}   // silent auto-save while editable
+function hlSave(){if(!$('hl-text').readOnly)hlStore(0);}
 function hlSetLocked(locked){
   const ta=$('hl-text'),card=$('hl-card');if(!ta)return;
   ta.readOnly=locked;
@@ -561,8 +567,10 @@ function hlSetLocked(locked){
 }
 function hlLoad(){
   const ta=$('hl-text');if(!ta)return;
-  let rec=null;
-  try{const raw=localStorage.getItem(hlKey());if(raw)rec=JSON.parse(raw);}catch(e){}
+  const k=hlKey();
+  // prefer in-file store (saved); fall back to localStorage (unsaved draft)
+  let rec=HL_STORE[k]||null;
+  if(!rec){try{const raw=localStorage.getItem(k);if(raw)rec=JSON.parse(raw);}catch(e){}}
   ta.value=rec?rec.t:'';
   hlSetLocked(rec?!!rec.s:false);
   if($('hl-tag'))$('hl-tag').textContent=cE.toUpperCase()+' · '+pLabel();
@@ -572,6 +580,8 @@ function hlSaveClick(){
   if($('hl-text').readOnly)return;
   hlStore(1);hlSetLocked(true);
   $('hl-status').textContent='Saved \u2713 '+new Date().toTimeString().slice(0,5)+' — locked.';
+  // write updated HL_STORE back into the file so it persists portably
+  hlPersistToFile();
 }
 function hlChangeShow(){
   $('hl-card').classList.add('hl-pwon');
@@ -587,6 +597,22 @@ function hlUnlock(){
   }
 }
 function hlToggle(){$('hl-card').classList.toggle('collapsed');}
+// hlPersistToFile: rewrites the HL_STORE line in the file and triggers a download
+// so the user gets an updated HTML with all highlights baked in.
+function hlPersistToFile(){
+  try{
+    const anchor=document.createElement('a');
+    const html=document.documentElement.outerHTML;
+    // Replace the HL_STORE object in the HTML with the current in-memory version
+    const updated=html.replace(/const HL_STORE=\{[^;]*\};/,
+      'const HL_STORE='+JSON.stringify(HL_STORE)+';');
+    const blob=new Blob([updated],{type:'text/html'});
+    anchor.href=URL.createObjectURL(blob);
+    anchor.download='GP_and_ATL_MR_Dashboard_May_2026.html';
+    anchor.click();URL.revokeObjectURL(anchor.href);
+    $('hl-status').textContent='Saved \u2713 — file downloaded with highlights embedded.';
+  }catch(e){$('hl-status').textContent='Saved in memory. Download not available in this viewer.';}
+}
 // Live suggested analysis for the selected entity + period, generated from the data.
 function hlSuggest(){
   const ta=$('hl-text');if(!ta||ta.readOnly)return;
