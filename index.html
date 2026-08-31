@@ -533,7 +533,7 @@ function rCF(){
 
 // ═══ CFP ═══
 function rCFP(){
-  const e=cE,c=EC[e],cf=CFP[e];const cfM=['Jul-26','Aug-26','Sep-26'];
+  const e=cE,c=EC[e],cf=CFP[e];const cfM=['Aug-26','Sep-26','Oct-26'];
   const end=cf['Ending Cash Balance'],beg=cf['Beginning Cash Balance'],opex=cf['Total OPEX'],trade=cf['Cash from trading operations'],cashOps=cf['Cash from operating activities'];
   const avgOp=opex.reduce((a,b)=>a+Math.abs(b),0)/opex.length;
   const rw=cfpRunway(e);
