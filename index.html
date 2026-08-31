@@ -414,7 +414,7 @@ function rPL(){
   dc('c-pop');ch['c-pop']=new Chart($('c-pop'),{type:'bar',data:{labels:lbls,datasets:[{label:'Operating Profit',data:sR(opP),backgroundColor:sR(opP).map(v=>v>=0?'rgba(5,150,105,.4)':'rgba(220,38,38,.4)'),borderRadius:3}]},options:{...bO(),plugins:{legend:{display:false}}}});
 
   // Table
-  const tS=p.s,tE=p.e,hd=aH(),tL=[];for(let i=tS;i<=tE&&i<19;i++)tL.push(hd[i]);
+  const tS=p.s,tE=p.e,hd=aH(),tL=[];for(let i=tS;i<=tE&&i<20;i++)tL.push(hd[i]);
   let th='<tr><th>Description</th>';tL.forEach(l=>{th+='<th>'+l+'</th>'});if(tL.length>1)th+='<th>Total</th>';th+='</tr>';$('p-th').innerHTML=th;
   const vol=V(d,'Volume');
   const gmPctArr=rev.map((r,i)=>r?(gp[i]/r*100):0);
@@ -473,7 +473,7 @@ function rBS(){
   dc('c-bacomp');ch['c-bacomp']=new Chart($('c-bacomp'),{type:'doughnut',data:{labels:['Cash','Trade Receivable','Other Receivable','Prepaid Tax','Advance','Fixed Assets'],datasets:[{data:['Cash and Cash Equivalents','Trade Receivables','Other Receivables','Prepaid Taxes','Advance Payment to Vendor','Fixed Asset - nett'].map(k=>Math.abs(V(d,k)[lat]||0)),backgroundColor:c.doughnut,borderWidth:0}]},options:{plugins:{legend:{position:'right',labels:{color:tC,font:{size:9},boxWidth:8}}}}});
   dc('c-bliab');ch['c-bliab']=new Chart($('c-bliab'),{type:'doughnut',data:{labels:['Trade Payable','Other Payable','Tax Payable','Advances','Accrued','Lease','Employee'],datasets:[{data:['Trade Payables','Other Payables','Taxes Payable','Advances from Customer','Accrued Expenses','Lease (Current)','Post Employee Benefits'].map(k=>Math.abs(V(d,k)[lat]||0)),backgroundColor:c.doughnut.concat(['#d1d5db']),borderWidth:0}]},options:{plugins:{legend:{position:'right',labels:{color:tC,font:{size:9},boxWidth:8}}}}});
 
-  const tS=p.s,tE=p.e,hd=aH(),tL=[];for(let i=tS;i<=tE&&i<19;i++)tL.push(hd[i]);
+  const tS=p.s,tE=p.e,hd=aH(),tL=[];for(let i=tS;i<=tE&&i<20;i++)tL.push(hd[i]);
   let th='<tr><th>Description</th>';tL.forEach(l=>{th+='<th>'+l+'</th>'});th+='</tr>';$('b-th').innerHTML=th;
   const bsG=[
     {l:'Total Assets',arr:ta,hl:true,hlColor:'dark',noKids:true},
@@ -509,7 +509,7 @@ function rCF(){
   const lbls=gL();
   dc('c-cbal');ch['c-cbal']=new Chart($('c-cbal'),{type:'line',data:{labels:lbls,datasets:[{label:'Ending',data:sR(endBal),borderColor:c.accent,backgroundColor:c.fill,fill:true,tension:.3,pointRadius:4},{label:'Beginning',data:sR(begBal),borderColor:'#9ca3af',borderDash:[4,3],tension:.3,pointRadius:2}]},options:bO()});
   dc('c-cnet');const netD=V(d,'Net increase/(decrease)');ch['c-cnet']=new Chart($('c-cnet'),{type:'bar',data:{labels:lbls,datasets:[{label:'Cash Movement',data:sR(netD),backgroundColor:sR(netD).map(v=>v>=0?'rgba(5,150,105,.5)':'rgba(220,38,38,.5)'),borderRadius:3}]},options:{...bO(),plugins:{legend:{display:false}}}});
-  const tS=p.s,tE=p.e,hd=aH(),tL=[];for(let i=tS;i<=tE&&i<19;i++)tL.push(hd[i]);
+  const tS=p.s,tE=p.e,hd=aH(),tL=[];for(let i=tS;i<=tE&&i<20;i++)tL.push(hd[i]);
   let th='<tr><th>Description</th>';tL.forEach(l=>{th+='<th>'+l+'</th>'});if(tL.length>1)th+='<th>Total</th>';th+='</tr>';$('f-th').innerHTML=th;
   const cfR=[
     {l:'Net CF Operating',arr:opCF,hl:true},
