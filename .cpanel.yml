@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/u5959765/public_html/financial-performance.tapworkspace.com/
+    - /bin/cp index.html $DEPLOYPATH
