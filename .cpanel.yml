@@ -1,5 +1,8 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/u5959765/public_html/financial-performance.tapworkspace.com/
-    - /bin/cp index.html $DEPLOYPATH
+    - export DEPLOYPATH=/home/u5959765/public_html/financial-performance.tapworkspace.com
+    - /bin/mkdir -p "$DEPLOYPATH"
+    - /bin/cp -f index.html "$DEPLOYPATH/index.html"
+    - /bin/cp -f .htaccess  "$DEPLOYPATH/.htaccess"
+    - /bin/cp -f robots.txt "$DEPLOYPATH/robots.txt"
